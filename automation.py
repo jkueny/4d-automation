@@ -3,6 +3,8 @@ import os
 from time import sleep
 import numpy as np
 
+print('Starting 4D automation script...')
+
 try:
     if (os.environ['HOME'].endswith('jkueny')) or (os.environ['HOME'].endswith('xsup')):
         import h5py
