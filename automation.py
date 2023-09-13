@@ -3,16 +3,23 @@ import os
 from time import sleep
 import numpy as np
 
-print('Starting 4D automation script...')
 
 try:
     if (os.environ['HOME'].endswith('jkueny')) or (os.environ['HOME'].endswith('xsup')):
+        print('Starting 4D automation script...')
         import h5py
         from astropy.io import fits
         from bmc import load_channel, write_fits, update_voltage_2K
         print('Executing on Pinky...')
 except:
-    print('Executing on the 4D computer...')
+    from Scripting.App import *
+    from Scripting.Modify import *
+    from Scripting.Data import *
+    from Scripting.Config import *
+    from Scripting.Measurements import *
+    from Scripting.Show import *
+    MessageBox('Starting 4D automation script!')
+    MessageBox('Executing on the 4D computer...')
     from fourD import capture_frame
 
 
