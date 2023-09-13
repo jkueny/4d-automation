@@ -7,14 +7,14 @@ try:
     if (os.environ['HOME'].endswith('jkueny')) or (os.environ['HOME'].endswith('xsup')):
         import h5py
         from astropy.io import fits
+        from bmc import load_channel, write_fits, update_voltage_2K
         print('Executing on Pinky...')
 except:
     print('Executing on the 4D computer...')
+    from fourD import capture_frame
 
 
 
-from fourD import capture_frame
-from bmc import load_channel, write_fits, update_voltage_2K
 # from irisao import write_ptt_command, apply_ptt_command #commented 6/27/23 JKK
 # from . import alpao #commented 6/27/23 JKK
 
