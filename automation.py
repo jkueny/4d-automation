@@ -387,109 +387,109 @@ class BMC2KMonitor(FileMonitor):
         # Write out empty file to tell Zygo the DM is ready.
         open(os.path.join(os.path.dirname(self.file), 'dm_ready'), 'w').close()
 
-class ALPAOMonitor(FileMonitor):
-    '''
-    Set the DM machine to watch a particular FITS files for
-    a modification, indicating a request for a new DM actuation
-    state.
+# class ALPAOMonitor(FileMonitor):
+#     '''
+#     Set the DM machine to watch a particular FITS files for
+#     a modification, indicating a request for a new DM actuation
+#     state.
 
-    Will ignore the current file if it already exists
-    when the monitor starts (until it's modified).
-    '''
-    def __init__(self, path, serial, input_file='dm_input.fits'):
-        '''
-        Parameters:
-            path : str
-                Network path to watch for 'dm_input.fits'
-                file.
-            serial : str
-                ALPAO DM97 serial number. Probably "BAX150"
-        '''
-        super().__init__(os.path.join(path, input_file))
-        self.serial = serial
-        #self.img = alpao.link_to_shmimage(serial)
+#     Will ignore the current file if it already exists
+#     when the monitor starts (until it's modified).
+#     '''
+#     def __init__(self, path, serial, input_file='dm_input.fits'):
+#         '''
+#         Parameters:
+#             path : str
+#                 Network path to watch for 'dm_input.fits'
+#                 file.
+#             serial : str
+#                 ALPAO DM97 serial number. Probably "BAX150"
+#         '''
+#         super().__init__(os.path.join(path, input_file))
+#         self.serial = serial
+#         #self.img = alpao.link_to_shmimage(serial)
 
-    def on_new_data(self, newdata):
-        '''
-        On detecting an updated dm_input.fits file,
-        load the image onto the DM and write out an
-        empty 'dm_ready' file to the network path
-        '''
-        # Load image from FITS file onto DM channel 0
-        log.info('Setting DM from new image file {}'.format(newdata))
-        #alpao.apply_command(fits.open(newdata)[0].data, self.serial, self.img)
-        alpao.apply_command_from_fits(newdata, self.serial)
+#     def on_new_data(self, newdata):
+#         '''
+#         On detecting an updated dm_input.fits file,
+#         load the image onto the DM and write out an
+#         empty 'dm_ready' file to the network path
+#         '''
+#         # Load image from FITS file onto DM channel 0
+#         log.info('Setting DM from new image file {}'.format(newdata))
+#         #alpao.apply_command(fits.open(newdata)[0].data, self.serial, self.img)
+#         alpao.apply_command_from_fits(newdata, self.serial)
 
-        # Write out empty file to tell Zygo the DM is ready.
-        open(os.path.join(os.path.dirname(self.file), 'dm_ready'), 'w').close()
+#         # Write out empty file to tell Zygo the DM is ready.
+#         open(os.path.join(os.path.dirname(self.file), 'dm_ready'), 'w').close()
 
-class IrisAOMonitor(FileMonitor):
-    '''
-    Set the DM machine to watch a particular FITS files for
-    a modification, indicating a request for a new DM actuation
-    state.
+# class IrisAOMonitor(FileMonitor):
+#     '''
+#     Set the DM machine to watch a particular FITS files for
+#     a modification, indicating a request for a new DM actuation
+#     state.
 
-    Will ignore the current file if it already exists
-    when the monitor starts (until it's modified).
-    '''
-    def __init__(self, path, mserial, input_file='ptt_input.txt'):
-        '''
-        Parameters:
-            path : str
-                Network path to watch for 'ptt_input.txt'
-                file.
-        '''
-        super().__init__(os.path.join(path, input_file))
-        self.mserial = mserial
+#     Will ignore the current file if it already exists
+#     when the monitor starts (until it's modified).
+#     '''
+#     def __init__(self, path, mserial, input_file='ptt_input.txt'):
+#         '''
+#         Parameters:
+#             path : str
+#                 Network path to watch for 'ptt_input.txt'
+#                 file.
+#         '''
+#         super().__init__(os.path.join(path, input_file))
+#         self.mserial = mserial
 
-    def on_new_data(self, newdata):
-        '''
-        On detecting an updated dm_input.fits file,
-        load the image onto the DM and write out an
-        empty 'dm_ready' file to the network path
-        '''
-        # Load image from FITS file onto DM channel 0
-        log.info('Setting DM from new PTT file {}'.format(newdata))
-        apply_ptt_command(newdata, mserial=self.mserial)
+#     def on_new_data(self, newdata):
+#         '''
+#         On detecting an updated dm_input.fits file,
+#         load the image onto the DM and write out an
+#         empty 'dm_ready' file to the network path
+#         '''
+#         # Load image from FITS file onto DM channel 0
+#         log.info('Setting DM from new PTT file {}'.format(newdata))
+#         apply_ptt_command(newdata, mserial=self.mserial)
 
-        # Write out empty file to tell Zygo the DM is ready.
-        open(os.path.join(os.path.dirname(self.file), 'dm_ready'), 'w').close()
+#         # Write out empty file to tell Zygo the DM is ready.
+#         open(os.path.join(os.path.dirname(self.file), 'dm_ready'), 'w').close()
 
-class BaslerMonitor(FileMonitor):
-    def __init__(self, path, camera, images, stop_after_capture=False, nimages=1):
-        '''
-        Parameters:
-            path : str
-                Network path to watch for 'dm_ready'
-                file indicating the DM is in the
-                requested state.
-            camera : pypylon camera object
-            images : list
-                List to append images to
-            stop_after_capture : bool, opt.
-                Stop monitor after capturing an 
-                image? Default: False.
-            nimages : int, opt.
-                Take multiple images? If > 1, each element
-                of the image list will be an array of images
-        '''
-        super().__init__(os.path.join(path,'dm_ready'))
+# class BaslerMonitor(FileMonitor):
+#     def __init__(self, path, camera, images, stop_after_capture=False, nimages=1):
+#         '''
+#         Parameters:
+#             path : str
+#                 Network path to watch for 'dm_ready'
+#                 file indicating the DM is in the
+#                 requested state.
+#             camera : pypylon camera object
+#             images : list
+#                 List to append images to
+#             stop_after_capture : bool, opt.
+#                 Stop monitor after capturing an 
+#                 image? Default: False.
+#             nimages : int, opt.
+#                 Take multiple images? If > 1, each element
+#                 of the image list will be an array of images
+#         '''
+#         super().__init__(os.path.join(path,'dm_ready'))
         
-        self.camera = camera
-        self.images = images
-        self.stop_after_capture = stop_after_capture
-        self.nimages = nimages
+#         self.camera = camera
+#         self.images = images
+#         self.stop_after_capture = stop_after_capture
+#         self.nimages = nimages
 
-    def on_new_data(self, newdata):
-        '''
-        On detecting a new 'dm_ready' file, capture
-        an image on the Basler camera.
-        '''
-        if self.nimages == 1:
-            self.images.append(self.camera.grab_image().astype(float))
-        else:
-            self.images.append(np.asarray(list(self.camera.grab_images(self.nimages))).astype(float))
-        log.info('Grabbed Basler frame! ({})'.format(len(self.images)))
-        open(os.path.join(os.path.dirname(self.file), 'basler_ready'), 'w').close()
-        if self.stop_after_capture:
-            self.continue_monitoring = False
+#     def on_new_data(self, newdata):
+#         '''
+#         On detecting a new 'dm_ready' file, capture
+#         an image on the Basler camera.
+#         '''
+#         if self.nimages == 1:
+#             self.images.append(self.camera.grab_image().astype(float))
+#         else:
+#             self.images.append(np.asarray(list(self.camera.grab_images(self.nimages))).astype(float))
+#         log.info('Grabbed Basler frame! ({})'.format(len(self.images)))
+#         open(os.path.join(os.path.dirname(self.file), 'basler_ready'), 'w').close()
+#         if self.stop_after_capture:
+#             self.continue_monitoring = False
