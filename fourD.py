@@ -31,7 +31,7 @@ except ImportError:
 
 save_measure_dir = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\4d-automation"
 
-def capture_frame(rawfolder=save_measure_dir,filenameprefix=None, mtype='acquire'):
+def capture_frame(rawfolder=save_measure_dir,filenameprefix=None, mtype='measure'):
     '''
     Capture an image on the PhaseCam via 4Sight. Saves to disk.
 
@@ -69,7 +69,7 @@ def capture_frame(rawfolder=save_measure_dir,filenameprefix=None, mtype='acquire
         MessageBox("%d of %d frames acquired" % (num_acq_frames, num_meas))
 
     elif (mtype.upper() == 'MEASURE') or (mtype.upper() == 'MEASUREMENT'):
-        measurement = AverageMeasure(frameCount=10,mblk='raw')
+        measurement = AverageMeasure()
     else:
         raise ValueError('Not understood! Did you mean "acquire" or "measure"?')
 
