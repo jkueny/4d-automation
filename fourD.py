@@ -73,9 +73,9 @@ def capture_frame(rawfolder=save_measure_dir,filenameprefix=None, mtype='acquire
     else:
         raise ValueError('Not understood! Did you mean "acquire" or "measure"?')
 
-    if filename is not None:
+    if filenameprefix is not None:
         log.info('4Sight: writing out to {0}'.format(filename))
-        if not SaveMeasurement(data=measurement,filename=filename):
+        if not SaveMeasurement(data=measurement,filename=filenameprefix):
             log.warning('Error saving the measurement')
 
 def save_surface(filename):
