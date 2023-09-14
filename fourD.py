@@ -29,7 +29,9 @@ except ImportError:
     log.warning( 'Could not load 4Sight Python library!' )
     log.warning( 'Functionality will be severely crippled.')
 
-def capture_frame(rawfolder,filenameprefix=None, mtype='acquire'):
+save_measure_dir = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\4d-automation"
+
+def capture_frame(rawfolder=save_measure_dir,filenameprefix=None, mtype='acquire'):
     '''
     Capture an image on the PhaseCam via 4Sight. Saves to disk.
 

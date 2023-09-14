@@ -12,15 +12,9 @@ try:
         from bmc import load_channel, write_fits, update_voltage_2K
         print('Executing on Pinky...')
 except:
-    from Scripting.App import *
-    from Scripting.Modify import *
-    from Scripting.Data import *
-    from Scripting.Config import *
-    from Scripting.Measurements import *
-    from Scripting.Show import *
+    from fourD import *
     MessageBox('Starting 4D automation script!')
     MessageBox('Executing on the 4D computer...')
-    from fourD import capture_frame
 
 
 
@@ -129,7 +123,7 @@ def phasecam_dm_run(
             #     write_fits(input_file, inputs, dtype=np.float32, overwrite=True)
             write_fits(input_file, inputs, dtype=np.float32, overwrite=True)
         else: #IRISAO
-            print('Invalid DM type. Only BMC is currently supported for PhaseCam work.')
+            log.info('Invalid DM type. Only BMC is currently supported for PhaseCam work.')
             break
         # else: #IRISAO
         #     input_file = os.path.join(network_path,'ptt_input.txt'.format(idx))
