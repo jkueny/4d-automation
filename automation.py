@@ -10,7 +10,7 @@ current_platform = platform.system()
 # if (os.environ['HOME'].endswith('jkueny')) or (os.environ['HOME'].endswith('xsup')):
 if (os.environ['HOME'].endswith('jkueny')) and (current_platform.upper() == 'LINUX'):
     print('Starting 4D automation script...')
-    import h5py
+    # import h5py
     from astropy.io import fits
     from bmc import load_channel, write_fits, update_voltage_2K
     from magpyx.utils import ImageStream
@@ -219,6 +219,7 @@ def write_dm_run_to_hdf5(filename, surface_cube, surface_attrs, intensity_cube,
             2D mask image
     Returns: nothing
     '''
+    import h5py
 
     # create hdf5 file
     f = h5py.File(filename, 'w')
