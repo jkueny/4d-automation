@@ -29,22 +29,26 @@ except ImportError:
     log.warning( 'Could not load 4Sight Python library!' )
     log.warning( 'Functionality will be severely crippled.')
 
-save_measure_dir = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\4d-automation"
 
-def capture_frame(rawfolder=save_measure_dir,filenameprefix=None, mtype='measure'):
+def capture_frame(reference,filenameprefix=None,mtype='average'):
     '''
-    Capture an image on the PhaseCam via 4Sight. Saves to disk.
+    Capture an image on the PhaseCam via 4Sight. 
+    Removes Piston/Tip/Tilt/Power from measurement.
+    Subtracts reference image.
+    Saves to disk.
 
     Parameters:
-        rawfolder : str (TODO optional?)
-            Location where frame data is to be stored.
+        reference: measurement object
+            Optical reference measurement to remove from data.
+            Should already exist on the 4D machine.
+            Ex. "C:\\Users\\PhaseCam\\Documents\\jay_4d\\reference.h5"
         filenameprefix : str (optional)
             Filename of output. If not provided, 4Sight will
             capture the image and load it into the interface
             but it's up to the user to use the GUI to save
             it out.
         mtype : str
-            'acquire' or 'measure'. 'Acquire' takes a measurement
+            'single' or 'average'. 'Acquire' takes a measurement
             without analyzing or updating the GUI (faster), while
             'measure' takes a measurement, analyzes, and updates
             the GUI (slower).
@@ -58,25 +62,22 @@ def capture_frame(rawfolder=save_measure_dir,filenameprefix=None, mtype='measure
     '''
     log.info('4Sight: capturing frame and acquiring from camera.')
     num_meas = 1
-    if mtype.upper() == 'ACQUIRE':
-        num_acq_frames = acquire_frames(num_frames=num_meas, 
-                                    output_dir=rawfolder, 
-                                    interval=None, 
-                                    use_detector_area=True, 
-                                    filename_prefix=filenameprefix, 
-                                    show_progress=True,
-                                    )
-        MessageBox("%d of %d frames acquired" % (num_acq_frames, num_meas))
-
-    elif (mtype.upper() == 'MEASURE') or (mtype.upper() == 'MEASUREMENT'):
-        measurement = AverageMeasure()
+    if mtype.upper() == 'SINGLE':
+        measurement = Measure()
+    elif (mtype.upper() == 'AVERAGE') or (mtype.upper() == 'AVG'):
+        measurement = AverageMeasure() #default 7 frames averaged
     else:
-        raise ValueError('Not understood! Did you mean "acquire" or "measure"?')
+        raise ValueError('Not understood! Did you mean "average" or "single"?')
+    RemovePiston(measurement)
+    RemoveTilt(measurement)
+    RemovePower(measurement)
+    SubtractOpticalReference(measurement,reference)
 
     if filenameprefix is not None:
         log.info('4Sight: writing out to {0}'.format(filenameprefix))
         if not SaveMeasurement(data=measurement,filename=filenameprefix):
             log.warning('Error saving the measurement')
+    return measurement
 
 def save_surface(filename):
     '''

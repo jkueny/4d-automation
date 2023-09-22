@@ -7,6 +7,8 @@ from astropy.io import fits
 import numpy as np
 from skimage import draw
 
+from magpyx.utils import ImageStream
+
 import logging
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)

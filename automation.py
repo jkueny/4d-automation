@@ -2,7 +2,7 @@ import glob as glob
 import os
 from time import sleep
 import numpy as np
-
+import subprocess
 
 try:
     if (os.environ['HOME'].endswith('jkueny')) or (os.environ['HOME'].endswith('xsup')):
@@ -10,11 +10,16 @@ try:
         import h5py
         from astropy.io import fits
         from bmc import load_channel, write_fits, update_voltage_2K
+        from magpyx.utils import ImageStream
+        # from magpyx.dm import dmutils
         print('Executing on Pinky...')
+        machine_name = 'pinky'
+        dm01 = ImageStream('dm01disp01')
 except:
     from fourD import *
     MessageBox('Starting 4D automation script!')
     MessageBox('Executing on the 4D computer...')
+    machine_name = 'phasecam'
 
 
 
@@ -27,14 +32,15 @@ log = logging.getLogger(__name__)
 
 def phasecam_dm_run(
                 dm_inputs,
-                network_path,
+                localfpath,
                 outname,
-                dmtype,
+                # dmtype,
                 delay=None,
                 # consolidate=True,
                 dry_run=True,
                 clobber=False,
-                mtype='measure',
+                reference=None,
+                mtype='average',
                 input_name='dm_inputs.fits',
                 ):
     '''
@@ -59,14 +65,15 @@ def phasecam_dm_run(
         dm_inputs: array-like
             Cube of displacement images. The DM will iteratively
             be set in each state on channel 0.
-        network_path : str
-            Path to shared network folder visible to both
-            Pinky and the 4D machine. This is where
-            cross-machine communication will take place.
-            Both machines must have read/write privileges.
+        localfpath : str
+            Path to folder where cross-machine communication 
+            will take place. Both machines must have read/write 
+            privileges.
         dmtype : str
             'bmc', 'irisao', or 'alpao'. This determines whether
-            the dm_inputs are written to .fits or .txt.
+            the dm_inputs are written to .fits or .txt. Disabled,
+            because this is only for our new Kilo from BMC for now.
+            JKK 09/19/23
         outname : str
             Directory to write results out to. Directory
             must not already exist.
@@ -95,51 +102,64 @@ def phasecam_dm_run(
     Returns: nothing
 
     '''
-    if dmtype.upper() not in ['BMC']:
-        raise ValueError('dmtype not recognized. Must be "BMC".')
+    # if dmtype.upper() not in ['BMC']:
+    #     raise ValueError('dmtype not recognized. Must be "BMC".')
 
     if not (dry_run or clobber):
         # Create a new directory outname to save results to
         assert not os.path.exists(outname), '{0} already exists!'.format(outname)
         os.mkdir(outname)
 
-    fd_mon = fourDMonitor(network_path)
+    fd_mon = fourDMonitor(localfpath)
+    bmc1k_mon = BMC1KMonitor(localfpath)
 
     for idx, inputs in enumerate(dm_inputs):
 
-        if dmtype.upper() == 'BMC':
-            #Remove any old inputs if they exist
-            old_files = glob.glob(os.path.join(network_path,'dm_input*.fits'))
-            for old_file in old_files:
-                if os.path.exists(old_file):
-                    os.remove(old_file)
-            # Write out FITS file with requested DM input
-            log.info('Setting DM to state {0}/{1}.'.format(idx + 1, len(dm_inputs)))
-            input_file = os.path.join(network_path,input_name)
-            # write out
-            # if dmtype.upper() == 'ALPAO':
-            #     alpao.command_to_fits(inputs, input_file, overwrite=True)
-            # else: #BMC
-            #     write_fits(input_file, inputs, dtype=np.float32, overwrite=True)
-            write_fits(input_file, inputs, dtype=np.float32, overwrite=True)
-        else: #IRISAO
-            log.info('Invalid DM type. Only BMC is currently supported for PhaseCam work.')
-            break
+        # if dmtype.upper() == 'BMC':
+        try:
+            if machine_name.upper() == 'PINKY':
+                #Remove any old inputs if they exist
+                old_files = glob.glob(os.path.join(localfpath,'dm_input*.fits'))
+                for old_file in old_files:
+                    if os.path.exists(old_file):
+                        os.remove(old_file)
+                # Write out FITS file with requested DM input
+                log.info('Setting DM to state {0}/{1}.'.format(idx + 1, len(dm_inputs)))
+                dm01.write(inputs[idx])
+                input_file = os.path.join(localfpath,input_name)
+                write_fits(filename=input_file, data=inputs, dtype=np.float32, overwrite=True)
+                
+                bmc1k_mon.watch(0.1) #this is watching for new dm_inputs.fits in localfpath
+                log.info('Sending new command...')
+            elif machine_name.upper() == 'PHASECAM': #need to do this because the 4Sight
+                #software can't handle fits files, outside installs not allowed...
+                #so here, we need to scp a file over the network to talk to pinky
+                fd_mon.watch(0.01) #this is watching for dm_ready file in localfpath
+                log.info('DM ready!')
+        except:
+            raise NameError('Which machine is executing this script?') 
+        # write out
+        # if dmtype.upper() == 'ALPAO':
+        #     alpao.command_to_fits(inputs, input_file, overwrite=True)
+        # else: #BMC
+        #     write_fits(input_file, inputs, dtype=np.float32, overwrite=True)
         # else: #IRISAO
-        #     input_file = os.path.join(network_path,'ptt_input.txt'.format(idx))
+        #     log.info('Invalid DM type. Only BMC is currently supported for PhaseCam work.')
+        #     break
+        # else: #IRISAO
+        #     input_file = os.path.join(localfpath,'ptt_input.txt'.format(idx))
         #     write_ptt_command(inputs, input_file)
 
         # Wait until DM indicates it's in the requested state
         # I'm a little worried the DM could get there before
         # the monitor starts watching the dm_ready file, but 
         # that hasn't happened yet.
-        fd_mon.watch(0.01)
-        log.info('DM ready!')
+        
 
         if not dry_run:
             # Take an image on the Zygo
             log.info('Taking image!')
-            capture_frame(filename=os.path.join(outname,'frame_{0:05d}.h5'.format(idx)),
+            measurement = capture_frame(reference=reference,filenameprefix=os.path.join(outname,'frame_{0:05d}.h5'.format(idx)),
                           mtype=mtype)
 
         # Remove input file
@@ -216,6 +236,17 @@ def write_dm_run_to_hdf5(filename, surface_cube, surface_attrs, intensity_cube,
     mask = f.create_dataset('mask', data=mask)
     
     f.close()
+
+def update_status_file(localfpath,remotefpath):
+    '''
+    Write an empty file at the correct folder, given the machine
+    '''
+    try:
+        subprocess.run(['scp', localfpath, remotefpath], check=True)
+        print(f'File copied to {remotefpath}')
+    except subprocess.CalledProcessError as e:
+        print(f'Error: {e}')
+
 
 
 class FileMonitor(object):
@@ -301,30 +332,6 @@ class fourDMonitor(FileMonitor):
         os.remove(newdata) # delete DM ready file
         self.continue_monitoring = False # stop monitor loop
 
-class ZygoMonitor(FileMonitor):
-    '''
-    Set the Zygo machine to watch for an indication from
-    the DM that it's been put in the requested state,
-    and proceed with data collection when ready
-    '''
-    def __init__(self, path):
-        '''
-        Parameters:
-            path : str
-                Network path to watch for 'dm_ready'
-                file indicating the DM is in the
-                requested state.
-        '''
-        super().__init__(os.path.join(path,'dm_ready'))
-
-    def on_new_data(self, newdata):
-        '''
-        On detecting a new 'dm_ready' file,
-        stop blocking the Zygo code. (No 
-        actual image capture happens here.)
-        '''
-        os.remove(newdata) # delete DM ready file
-        self.continue_monitoring = False # stop monitor loop
 
 class BMC1KMonitor(FileMonitor):
     '''
@@ -354,41 +361,91 @@ class BMC1KMonitor(FileMonitor):
         log.info('Setting DM from new image file {}'.format(newdata))
         load_channel(newdata, 0)
 
-        # Write out empty file to tell Zygo the DM is ready.
+        # Write out empty file to tell 4Sight the DM is ready.
         open(os.path.join(os.path.dirname(self.file), 'dm_ready'), 'w').close()
 
-class BMC2KMonitor(FileMonitor):
-    '''
-    Set the DM machine to watch a particular FITS files for
-    a modification, indicating a request for a new DM actuation
-    state.
 
-    Will ignore the current file if it already exists
-    when the monitor starts (until it's modified).
-    '''
-    def __init__(self, path, serial, input_file='dm_input.fits', script_path='/home/kvangorkom/BMC-interface'):
-        '''
-        Parameters:
-            path : str
-                Network path to watch for 'dm_input.fits'
-                file.
-        '''
-        super().__init__(os.path.join(path, input_file))
-        self.serial = serial
-        self.script_path = script_path
 
-    def on_new_data(self, newdata):
-        '''
-        On detecting an updated dm_input.fits file,
-        load the image onto the DM and write out an
-        empty 'dm_ready' file to the network path
-        '''
-        # Load image from FITS file onto DM channel 0
-        log.info('Setting DM from new image file {}'.format(newdata))
-        update_voltage_2K(newdata, self.serial, self.script_path)
+if __name__ == '__main__':
+    kilo_dm_size = (34,34)
+    n_actuators = 952
+    voltage_bias = -1
+    save_measure_dir = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\4d-automation\\test"
+    reference_flat = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\reference_lamb20avg12_average_ttp-removed.h5"
+    shared_net_folder = "/home/jkueny"
+    # kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
+    kilo_map = np.load('./calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
+    kilo_mask = (kilo_map > 0)
+    cmds_matrix = voltage_bias * np.eye(kilo_dm_size[0]*kilo_dm_size[1])[kilo_mask.flatten()]
+    dm_cmds = cmds_matrix.reshape(n_actuators,kilo_dm_size[0],kilo_dm_size[1])
+    single_pokes = []
+    for i in range(len(dm_cmds[0])): #34 length
+        single_pokes.append(dm_cmds[i])
+        break #starting with one command for now
+    print(len(single_pokes))
+    phasecam_dm_run(dm_inputs=single_pokes,
+                    localfpath=shared_net_folder,
+                    outname=save_measure_dir,
+                    reference=reference_flat,
+                    dry_run=True,)
 
-        # Write out empty file to tell Zygo the DM is ready.
-        open(os.path.join(os.path.dirname(self.file), 'dm_ready'), 'w').close()
+# class ZygoMonitor(FileMonitor):
+#     '''
+#     Set the Zygo machine to watch for an indication from
+#     the DM that it's been put in the requested state,
+#     and proceed with data collection when ready
+#     '''
+#     def __init__(self, path):
+#         '''
+#         Parameters:
+#             path : str
+#                 Network path to watch for 'dm_ready'
+#                 file indicating the DM is in the
+#                 requested state.
+#         '''
+#         super().__init__(os.path.join(path,'dm_ready'))
+
+#     def on_new_data(self, newdata):
+#         '''
+#         On detecting a new 'dm_ready' file,
+#         stop blocking the Zygo code. (No 
+#         actual image capture happens here.)
+#         '''
+#         os.remove(newdata) # delete DM ready file
+#         self.continue_monitoring = False # stop monitor loop
+
+# class BMC2KMonitor(FileMonitor):
+#     '''
+#     Set the DM machine to watch a particular FITS files for
+#     a modification, indicating a request for a new DM actuation
+#     state.
+
+#     Will ignore the current file if it already exists
+#     when the monitor starts (until it's modified).
+#     '''
+#     def __init__(self, path, serial, input_file='dm_input.fits', script_path='/home/kvangorkom/BMC-interface'):
+#         '''
+#         Parameters:
+#             path : str
+#                 Network path to watch for 'dm_input.fits'
+#                 file.
+#         '''
+#         super().__init__(os.path.join(path, input_file))
+#         self.serial = serial
+#         self.script_path = script_path
+
+#     def on_new_data(self, newdata):
+#         '''
+#         On detecting an updated dm_input.fits file,
+#         load the image onto the DM and write out an
+#         empty 'dm_ready' file to the network path
+#         '''
+#         # Load image from FITS file onto DM channel 0
+#         log.info('Setting DM from new image file {}'.format(newdata))
+#         update_voltage_2K(newdata, self.serial, self.script_path)
+
+#         # Write out empty file to tell Zygo the DM is ready.
+#         open(os.path.join(os.path.dirname(self.file), 'dm_ready'), 'w').close()
 
 # class ALPAOMonitor(FileMonitor):
 #     '''
