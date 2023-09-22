@@ -21,7 +21,7 @@ if (os.environ['HOME'].endswith('jkueny')) and (current_platform.upper() == 'LIN
 elif (os.environ['USERPROFILE'].endswith('PhaseCam')) and (current_platform.upper() == 'WINDOWS'):
     from fourD import *
     MessageBox('Executing on the 4D computer...')
-    machine_name = 'phasecam'
+    machine_name = '4d'
 else:
     print('Unsupported platform: ', current_platform)
 
@@ -119,27 +119,27 @@ def phasecam_dm_run(
     for idx, inputs in enumerate(dm_inputs):
 
         # if dmtype.upper() == 'BMC':
-        try:
-            if machine_name.upper() == 'PINKY':
-                #Remove any old inputs if they exist
-                old_files = glob.glob(os.path.join(localfpath,'dm_input*.fits'))
-                for old_file in old_files:
-                    if os.path.exists(old_file):
-                        os.remove(old_file)
-                # Write out FITS file with requested DM input
-                log.info('Setting DM to state {0}/{1}.'.format(idx + 1, len(dm_inputs)))
-                dm01.write(inputs[idx])
-                input_file = os.path.join(localfpath,input_name)
-                write_fits(filename=input_file, data=inputs, dtype=np.float32, overwrite=True)
-                
-                bmc1k_mon.watch(0.1) #this is watching for new dm_inputs.fits in localfpath
-                log.info('Sending new command...')
-            elif machine_name.upper() == 'PHASECAM': #need to do this because the 4Sight
-                #software can't handle fits files, outside installs not allowed...
-                #so here, we need to scp a file over the network to talk to pinky
-                fd_mon.watch(0.01) #this is watching for dm_ready file in localfpath
-                log.info('DM ready!')
-        except:
+
+        if machine_name.upper() == 'PINKY':
+            #Remove any old inputs if they exist
+            old_files = glob.glob(os.path.join(localfpath,'dm_input*.fits'))
+            for old_file in old_files:
+                if os.path.exists(old_file):
+                    os.remove(old_file)
+            # Write out FITS file with requested DM input
+            log.info('Setting DM to state {0}/{1}.'.format(idx + 1, len(dm_inputs)))
+            dm01.write(inputs)
+            input_file = os.path.join(localfpath,input_name)
+            write_fits(filename=input_file, data=inputs, dtype=np.float32, overwrite=True)
+            
+            log.info('Sending new command...')
+            bmc1k_mon.watch(0.1) #this is watching for new dm_inputs.fits in localfpath
+        elif machine_name.upper() == '4D': #need to do this because the 4Sight
+            #software can't handle fits files, outside installs not allowed...
+            #so here, we need to scp a file over the network to talk to pinky
+            fd_mon.watch(0.01) #this is watching for dm_ready file in localfpath
+            log.info('DM ready!')
+        else:
             raise NameError('Which machine is executing this script?') 
         # write out
         # if dmtype.upper() == 'ALPAO':
