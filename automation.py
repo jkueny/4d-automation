@@ -44,7 +44,7 @@ def phasecam_dm_run(
                 clobber=False,
                 reference=None,
                 mtype='average',
-                input_name='dm_inputs.fits',
+                input_name='dm_input.fits',
                 ):
     '''
     Loop over dm_inputs, setting the DM in the requested state,
@@ -376,7 +376,7 @@ if __name__ == '__main__':
     voltage_bias = -1
     save_measure_dir = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\4d-automation\\test"
     reference_flat = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\reference_lamb20avg12_average_ttp-removed.h5"
-    shared_net_folder = "/home/jkueny"
+    home_folder = "/home/jkueny"
     # kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
     kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
     kilo_mask = (kilo_map > 0)
@@ -388,7 +388,7 @@ if __name__ == '__main__':
         break #starting with one command for now
     print(len(single_pokes))
     phasecam_dm_run(dm_inputs=single_pokes,
-                    localfpath=shared_net_folder,
+                    localfpath=home_folder,
                     outname=save_measure_dir,
                     reference=reference_flat,
                     dry_run=True,)
