@@ -16,13 +16,14 @@ try:
         machine_name = 'pinky'
         dm01 = ImageStream('dm01disp01')
 except:
-    from fourD import *
-    MessageBox('Starting 4D automation script!')
-    MessageBox('Executing on the 4D computer...')
-    machine_name = 'phasecam'
+    print(os.environ['HOME'])
+    # from fourD import *
+    # MessageBox('Starting 4D automation script!')
+    # MessageBox('Executing on the 4D computer...')
+    # machine_name = 'phasecam'
 
 
-
+exit()
 # from irisao import write_ptt_command, apply_ptt_command #commented 6/27/23 JKK
 # from . import alpao #commented 6/27/23 JKK
 
