@@ -378,7 +378,7 @@ if __name__ == '__main__':
     reference_flat = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\reference_lamb20avg12_average_ttp-removed.h5"
     shared_net_folder = "/home/jkueny"
     # kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
-    kilo_map = np.load('./calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
+    kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
     kilo_mask = (kilo_map > 0)
     cmds_matrix = voltage_bias * np.eye(kilo_dm_size[0]*kilo_dm_size[1])[kilo_mask.flatten()]
     dm_cmds = cmds_matrix.reshape(n_actuators,kilo_dm_size[0],kilo_dm_size[1])
