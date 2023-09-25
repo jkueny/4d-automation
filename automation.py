@@ -36,6 +36,7 @@ log = logging.getLogger(__name__)
 def phasecam_dm_run(
                 dm_inputs,
                 localfpath,
+                remotefpath,
                 outname,
                 # dmtype,
                 delay=None,
@@ -113,8 +114,8 @@ def phasecam_dm_run(
         assert not os.path.exists(outname), '{0} already exists!'.format(outname)
         os.mkdir(outname)
 
-    fd_mon = fourDMonitor(localfpath)
-    bmc1k_mon = BMC1KMonitor(localfpath)
+    fd_mon = fourDMonitor(localfpath,remotefpath)
+    bmc1k_mon = BMC1KMonitor(localfpath,remotefpath)
 
     for idx, inputs in enumerate(dm_inputs):
 
@@ -128,10 +129,10 @@ def phasecam_dm_run(
                     os.remove(old_file)
             # Write out FITS file with requested DM input
             log.info('Setting DM to state {0}/{1}.'.format(idx + 1, len(dm_inputs)))
-            dm01.write(inputs)
+            if not dry_run:
+                dm01.write(inputs)
             input_file = os.path.join(localfpath,input_name)
             write_fits(filename=input_file, data=inputs, dtype=np.float32, overwrite=True)
-            
             log.info('Sending new command...')
             bmc1k_mon.watch(0.1) #this is watching for new dm_inputs.fits in localfpath
         elif machine_name.upper() == '4D': #need to do this because the 4Sight
@@ -346,27 +347,31 @@ class BMC1KMonitor(FileMonitor):
     Will ignore the current file if it already exists
     when the monitor starts (until it's modified).
     '''
-    def __init__(self, path, input_file='dm_input.fits'):
+    def __init__(self, locpath, rempath, input_file='dm_input.fits'):
         '''
         Parameters:
-            path : str
-                Network path to watch for 'dm_input.fits'
-                file.
+            locpath : str
+                Local path to create and watch for status files.
+            rempath: str
+                Remote path to scp status files to.
         '''
-        super().__init__(os.path.join(path, input_file))
+        self.remote_send = rempath
+        super().__init__(os.path.join(locpath, input_file))
 
     def on_new_data(self, newdata):
         '''
         On detecting an updated dm_input.fits file,
-        load the image onto the DM and write out an
-        empty 'dm_ready' file to the network path
+        load the image onto the DM and scp an
+        empty 'dm_ready' file to the 4D machine
         '''
         # Load image from FITS file onto DM channel 0
         log.info('Setting DM from new image file {}'.format(newdata))
-        load_channel(newdata, 0)
+        load_channel(newdata, 1) #dmdisp01
+        local_status_fname = os.path.join(os.path.dirname(self.file), 'dm_ready')
 
-        # Write out empty file to tell 4Sight the DM is ready.
-        open(os.path.join(os.path.dirname(self.file), 'dm_ready'), 'w').close()
+        # Write out empty file locally, then scp over to tell 4Sight the DM is ready.
+        open(local_status_fname, 'w').close()
+        update_status_file(localfpath=local_status_fname,remotepath=self.remote_send)
 
 
 
@@ -376,7 +381,14 @@ if __name__ == '__main__':
     voltage_bias = -1
     save_measure_dir = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\4d-automation\\test"
     reference_flat = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\reference_lamb20avg12_average_ttp-removed.h5"
-    home_folder = "/home/jkueny"
+    if machine_name.upper() == 'PINKY':
+        home_folder = "/home/jkueny"
+        remote_folder = 'C:\\Users\\PhaseCam'
+    elif machine_name.upper() == 'PHASECAM':
+        home_folder = 'C:\\Users\\PhaseCam'
+        remote_folder = "/home/jkueny"
+    else:
+        print('Error, what machine? Bc apparently it is not pinky or the 4D machine...')
     # kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
     kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
     kilo_mask = (kilo_map > 0)
@@ -389,6 +401,7 @@ if __name__ == '__main__':
     print(len(single_pokes))
     phasecam_dm_run(dm_inputs=single_pokes,
                     localfpath=home_folder,
+                    remotefpath=remote_folder,
                     outname=save_measure_dir,
                     reference=reference_flat,
                     dry_run=True,)

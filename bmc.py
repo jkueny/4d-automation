@@ -56,19 +56,21 @@ def load_channel(fits_file, channel):
             Integer channel to load FITS file onto
     Returns: nothing
     '''
-    script_path = '/home/lab/src/scripts'
+    # script_path = '/home/lab/src/scripts'
     basename = os.path.basename(fits_file)
 
+    
 
-    # Copy FITS file over to /home/lab/src/scripts
-    if not os.path.exists(os.path.join(script_path, basename)):
-        shutil.copy2(fits_file, script_path)
-    else:
-        raise Exception('The file {} already exists in {}.'.format(basename, script_path))
 
-    # Call the DM command to load file into channel
-    subprocess.call(['sh', 'dmloadch', basename, str(channel)],
-                     cwd=script_path)
+    # # Copy FITS file over to /home/lab/src/scripts
+    # if not os.path.exists(os.path.join(script_path, basename)):
+    #     shutil.copy2(fits_file, script_path)
+    # else:
+    #     raise Exception('The file {} already exists in {}.'.format(basename, script_path))
+
+    # # Call the DM command to load file into channel
+    # subprocess.call(['sh', 'dmloadch', basename, str(channel)],
+    #                  cwd=script_path)
 
     #Delete afterwards!
     os.remove(os.path.join(script_path, basename))
