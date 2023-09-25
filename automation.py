@@ -382,7 +382,7 @@ class BMC1KMonitor(FileMonitor):
 
         # Write out empty file locally, then scp over to tell 4Sight the DM is ready.
         open(local_status_fname, 'w').close()
-        update_status_file(localfpath=local_status_fname,remotepath=self.remote_send)
+        update_status_file(localfpath=local_status_fname,remotefpath=self.remote_send)
 
 
 
