@@ -252,7 +252,7 @@ def update_status_file(localfpath,remotefpath,user,address):
     send_to = '{}@{}:{}'.format(user,address,remotefpath) 
     try:
         print('Attempting to send to {}'.format(send_to))
-        subprocess.run(['scp', localfpath, remotefpath], check=True)
+        subprocess.run(['scp', localfpath, send_to], check=True)
         print('File copied to {}'.format(send_to))
     except subprocess.CalledProcessError as e:
         print('Error: {}'.format(e))
