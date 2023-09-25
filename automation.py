@@ -377,7 +377,7 @@ class BMC1KMonitor(FileMonitor):
         '''
         # Load image from FITS file onto DM channel 0
         log.info('Setting DM from new image file {}'.format(newdata))
-        load_channel(newdata, 1) #dmdisp01
+        # load_channel(newdata, 1) #dmdisp01
         local_status_fname = os.path.join(os.path.dirname(self.file), 'dm_ready')
 
         # Write out empty file locally, then scp over to tell 4Sight the DM is ready.
