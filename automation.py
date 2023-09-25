@@ -245,15 +245,17 @@ def write_dm_run_to_hdf5(filename, surface_cube, surface_attrs, intensity_cube,
     
     f.close()
 
-def update_status_file(localfpath,remotefpath):
+def update_status_file(localfpath,remotefpath,user,address):
     '''
     Write an empty file at the correct folder, given the machine
     '''
+    send_to = '{}@{}:{}'.format(user,address,remotefpath) 
     try:
+        print('Attempting to send to {}'.format(send_to))
         subprocess.run(['scp', localfpath, remotefpath], check=True)
-        print(f'File copied to {remotefpath}')
+        print('File copied to {}'.format(send_to))
     except subprocess.CalledProcessError as e:
-        print(f'Error: {e}')
+        print('Error: {}'.format(e))
 
 
 
@@ -344,9 +346,14 @@ class fourDMonitor(FileMonitor):
         self.continue_monitoring = False # stop monitor loop
         local_status_fname = os.path.join(os.path.dirname(self.file), 'awaiting_dm')
 
+        to_user = 'jkueny'
+        to_address = '192.168.1.2'
+
         # Write out empty file locally, then scp over to tell 4Sight the DM is ready.
         open(local_status_fname, 'w').close()
-        update_status_file(localfpath=local_status_fname,remotepath=self.remote_send)
+        update_status_file(localfpath=local_status_fname,
+                           remotefpath=self.remote_send,
+                           user=to_user,address=to_address)
 
 
 class BMC1KMonitor(FileMonitor):
@@ -377,12 +384,16 @@ class BMC1KMonitor(FileMonitor):
         '''
         # Load image from FITS file onto DM channel 0
         log.info('Setting DM from new image file {}'.format(newdata))
+        to_user = 'PhaseCam'
+        to_address = '192.168.1.3'
         # load_channel(newdata, 1) #dmdisp01
         local_status_fname = os.path.join(os.path.dirname(self.file), 'dm_ready')
 
         # Write out empty file locally, then scp over to tell 4Sight the DM is ready.
         open(local_status_fname, 'w').close()
-        update_status_file(localfpath=local_status_fname,remotefpath=self.remote_send)
+        update_status_file(localfpath=local_status_fname,
+                           remotefpath=self.remote_send,
+                           user=to_user,address=to_address)
 
 
 
