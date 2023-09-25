@@ -46,6 +46,7 @@ def phasecam_dm_run(
                 reference=None,
                 mtype='average',
                 input_name='dm_input.fits',
+                ispinky=True,
                 ):
     '''
     Loop over dm_inputs, setting the DM in the requested state,
@@ -114,8 +115,10 @@ def phasecam_dm_run(
         assert not os.path.exists(outname), '{0} already exists!'.format(outname)
         os.mkdir(outname)
 
-    fd_mon = fourDMonitor(localfpath,remotefpath)
-    bmc1k_mon = BMC1KMonitor(localfpath,remotefpath)
+    if ispinky:
+        bmc1k_mon = BMC1KMonitor(localfpath,remotefpath)
+    else:
+        fd_mon = fourDMonitor(localfpath,remotefpath)
 
     for idx, inputs in enumerate(dm_inputs):
 
@@ -318,15 +321,18 @@ class fourDMonitor(FileMonitor):
     the DM that it's been put in the requested state,
     and proceed with data collection when ready
     '''
-    def __init__(self, path):
+    def __init__(self, locpath, rempath):
         '''
         Parameters:
-            path : str
-                Network path to watch for 'dm_ready'
+            locpath : str
+                Local path to watch for 'dm_ready'
                 file indicating the DM is in the
                 requested state.
+            rempath: str
+                Remote path to scp status file to.
         '''
-        super().__init__(os.path.join(path,'dm_ready'))
+        self.remote_send = rempath
+        super().__init__(os.path.join(locpath,'dm_ready'))
 
     def on_new_data(self, newdata):
         '''
@@ -336,6 +342,11 @@ class fourDMonitor(FileMonitor):
         '''
         os.remove(newdata) # delete DM ready file
         self.continue_monitoring = False # stop monitor loop
+        local_status_fname = os.path.join(os.path.dirname(self.file), 'awaiting_dm')
+
+        # Write out empty file locally, then scp over to tell 4Sight the DM is ready.
+        open(local_status_fname, 'w').close()
+        update_status_file(localfpath=local_status_fname,remotepath=self.remote_send)
 
 
 class BMC1KMonitor(FileMonitor):
