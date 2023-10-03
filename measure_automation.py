@@ -266,7 +266,7 @@ def update_status_file(localfpath,remotefpath,user,address):
     '''
     Write an empty file at the correct folder, given the machine
     '''
-    send_to = '{}@{}:{}'.format(user,address,remotefpath) 
+    send_to = '{0}@{1}:{2}'.format(user,address,remotefpath) 
     try:
         print('Attempting to send to {0}'.format(send_to))
         subprocess.run(['scp', localfpath, send_to], check=True)
@@ -279,7 +279,7 @@ save_measure_dir = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\4d-automation\\test"
 reference_flat = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\reference_lamb20avg12_average_ttp-removed.h5"
 if machine_name.upper() == 'PINKY':
     print('Execution on the wrong computer!!!')
-    print('We are on {}'.format(current_platform))
+    print('We are on {0}'.format(current_platform))
     print('We should be on the 4D Windows machine in Lab 584...')
 elif machine_name.upper() == 'PHASECAM' or machine_name.upper() == '4D':
     home_folder = 'C:\\Users\\PhaseCam'
