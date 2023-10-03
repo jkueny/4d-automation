@@ -347,7 +347,7 @@ class fourDMonitor(FileMonitor):
         local_status_fname = os.path.join(os.path.dirname(self.file), 'awaiting_dm')
 
         to_user = 'jkueny'
-        to_address = '192.168.1.2'
+        to_address = '192.168.1.6'
 
         # Write out empty file locally, then scp over to tell 4Sight the DM is ready.
         open(local_status_fname, 'w').close()
@@ -400,7 +400,10 @@ class BMC1KMonitor(FileMonitor):
 if __name__ == '__main__':
     kilo_dm_size = (34,34)
     n_actuators = 952
-    voltage_bias = -1
+    # m_volume_factor = 0.5275
+    # m_act_gain = -1.1572
+    # m_dm_input = np.sqrt(cmd * m_volume_factor/m_act_gain)
+    optimal_voltage_bias = -1.075 #this is the physical displacement in microns for 70% V bias
     save_measure_dir = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\4d-automation\\test"
     reference_flat = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\reference_lamb20avg12_average_ttp-removed.h5"
     if machine_name.upper() == 'PINKY':
@@ -414,7 +417,7 @@ if __name__ == '__main__':
     # kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
     kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
     kilo_mask = (kilo_map > 0)
-    cmds_matrix = voltage_bias * np.eye(kilo_dm_size[0]*kilo_dm_size[1])[kilo_mask.flatten()]
+    cmds_matrix = optimal_voltage_bias * np.eye(kilo_dm_size[0]*kilo_dm_size[1])[kilo_mask.flatten()]
     dm_cmds = cmds_matrix.reshape(n_actuators,kilo_dm_size[0],kilo_dm_size[1])
     single_pokes = []
     for i in range(len(dm_cmds[0])): #34 length
