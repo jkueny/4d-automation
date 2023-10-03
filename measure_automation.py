@@ -102,7 +102,7 @@ def phasecam_run(
 
     input_file = os.path.join(localfpath,input_name)
     assert not os.path.exists(input_file), '{0} already exists!'.format(input_file)
-    log.info('Watching for file {}'.format(input_file))
+    log.info('Watching for file {0}'.format(input_file))
     if not (dry_run or clobber):
         # Create a new directory outname to save results to
         assert not os.path.exists(input_file), '{0} aready exists! Aborting...'.format(outname)
@@ -268,11 +268,11 @@ def update_status_file(localfpath,remotefpath,user,address):
     '''
     send_to = '{}@{}:{}'.format(user,address,remotefpath) 
     try:
-        print('Attempting to send to {}'.format(send_to))
+        print('Attempting to send to {0}'.format(send_to))
         subprocess.run(['scp', localfpath, send_to], check=True)
-        print('File copied to {}'.format(send_to))
+        print('File copied to {0}'.format(send_to))
     except subprocess.CalledProcessError as e:
-        print('Error: {}'.format(e))
+        print('Error: {0}'.format(e))
         
 save_measure_dir = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\4d-automation\\test"
 #first take a flat, then hard-code the fpath for it here
