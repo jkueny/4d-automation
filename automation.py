@@ -21,6 +21,7 @@ if (os.environ['HOME'].endswith('jkueny')) and (current_platform.upper() == 'LIN
 elif (os.environ['USERPROFILE'].endswith('PhaseCam')) and (current_platform.upper() == 'WINDOWS'):
     from fourD import *
     MessageBox('Executing on the 4D computer...')
+    print('test')
     machine_name = '4d'
 else:
     print('Unsupported platform: ', current_platform)
@@ -143,6 +144,18 @@ def phasecam_dm_run(
             #so here, we need to scp a file over the network to talk to pinky
             fd_mon.watch(0.01) #this is watching for dm_ready file in localfpath
             log.info('DM ready!')
+            # Wait until DM indicates it's in the requested state
+            # I'm a little worried the DM could get there before
+            # the monitor starts watching the dm_ready file, but 
+            # that hasn't happened yet.
+            
+
+            if not dry_run:
+                # Take an image on the Zygo
+                log.info('Taking image!')
+                measurement = capture_frame(reference=reference,
+                                            filenameprefix=os.path.join(outname,'frame_{0:05d}.h5'.format(idx)),
+                            mtype=mtype)
         else:
             raise NameError('Which machine is executing this script?') 
         # write out
@@ -157,17 +170,6 @@ def phasecam_dm_run(
         #     input_file = os.path.join(localfpath,'ptt_input.txt'.format(idx))
         #     write_ptt_command(inputs, input_file)
 
-        # Wait until DM indicates it's in the requested state
-        # I'm a little worried the DM could get there before
-        # the monitor starts watching the dm_ready file, but 
-        # that hasn't happened yet.
-        
-
-        if not dry_run:
-            # Take an image on the Zygo
-            log.info('Taking image!')
-            measurement = capture_frame(reference=reference,filenameprefix=os.path.join(outname,'frame_{0:05d}.h5'.format(idx)),
-                          mtype=mtype)
 
         # Remove input file
         if os.path.exists(input_file):
@@ -409,21 +411,21 @@ if __name__ == '__main__':
     if machine_name.upper() == 'PINKY':
         home_folder = "/home/jkueny"
         remote_folder = 'C:\\Users\\PhaseCam'
+        kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
+        kilo_mask = (kilo_map > 0)
+        cmds_matrix = optimal_voltage_bias * np.eye(kilo_dm_size[0]*kilo_dm_size[1])[kilo_mask.flatten()]
+        dm_cmds = cmds_matrix.reshape(n_actuators,kilo_dm_size[0],kilo_dm_size[1])
+        single_pokes = []
+        for i in range(len(dm_cmds[0])): #34 length
+            single_pokes.append(dm_cmds[i])
+            break #starting with one command for now
+        # print(len(single_pokes))
     elif machine_name.upper() == 'PHASECAM':
         home_folder = 'C:\\Users\\PhaseCam'
         remote_folder = "/home/jkueny"
     else:
         print('Error, what machine? Bc apparently it is not pinky or the 4D machine...')
     # kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
-    kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
-    kilo_mask = (kilo_map > 0)
-    cmds_matrix = optimal_voltage_bias * np.eye(kilo_dm_size[0]*kilo_dm_size[1])[kilo_mask.flatten()]
-    dm_cmds = cmds_matrix.reshape(n_actuators,kilo_dm_size[0],kilo_dm_size[1])
-    single_pokes = []
-    for i in range(len(dm_cmds[0])): #34 length
-        single_pokes.append(dm_cmds[i])
-        break #starting with one command for now
-    print(len(single_pokes))
     phasecam_dm_run(dm_inputs=single_pokes,
                     localfpath=home_folder,
                     remotefpath=remote_folder,
