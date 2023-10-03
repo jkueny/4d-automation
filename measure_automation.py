@@ -100,8 +100,9 @@ def phasecam_run(
     # if dmtype.upper() not in ['BMC']:
     #     raise ValueError('dmtype not recognized. Must be "BMC".')
 
-    assert not os.path.exists(outname), '{0} already exists!'.format(outname)
     input_file = os.path.join(localfpath,input_name)
+    assert not os.path.exists(input_file), '{0} already exists!'.format(input_file)
+    log.info('Watching for file {}'.format(input_file))
     if not (dry_run or clobber):
         # Create a new directory outname to save results to
         assert not os.path.exists(input_file), '{0} aready exists! Aborting...'.format(outname)
