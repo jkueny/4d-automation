@@ -23,7 +23,7 @@ except:
     if (os.environ['USERPROFILE'].endswith('PhaseCam')) and (current_platform.upper() == 'WINDOWS'):
         from fourD import *
         MessageBox('Executing on the 4D computer...')
-        machine_name = '4d'
+        machine_name = 'PhaseCam'
     else:
         print('Unsupported platform: ', current_platform)
 
@@ -100,10 +100,10 @@ def phasecam_run(
     # if dmtype.upper() not in ['BMC']:
     #     raise ValueError('dmtype not recognized. Must be "BMC".')
 
+    assert not os.path.exists(outname), '{0} already exists!'.format(outname)
     input_file = os.path.join(localfpath,input_name)
     if not (dry_run or clobber):
         # Create a new directory outname to save results to
-        assert not os.path.exists(outname), '{0} already exists!'.format(outname)
         assert not os.path.exists(input_file), '{0} aready exists! Aborting...'.format(outname)
         os.mkdir(outname)
 
@@ -269,7 +269,7 @@ if __name__ == '__main__':
         print('Execution on the wrong computer!!!')
         print('We are on {}'.format(current_platform))
         print('We should be on the 4D Windows machine in Lab 584...')
-    elif machine_name.upper() == 'PHASECAM':
+    elif machine_name.upper() == 'PHASECAM' or machine_name.upper() == '4D':
         home_folder = 'C:\\Users\\PhaseCam'
         remote_folder = "/home/jkueny"
     else:
