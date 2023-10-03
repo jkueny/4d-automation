@@ -8,23 +8,25 @@ import platform
 current_platform = platform.system()
 
 # if (os.environ['HOME'].endswith('jkueny')) or (os.environ['HOME'].endswith('xsup')):
-if (os.environ['HOME'].endswith('jkueny')) and (current_platform.upper() == 'LINUX'):
-    print('Starting 4D automation script...')
-    # import h5py
-    from astropy.io import fits
-    from bmc import load_channel, write_fits, update_voltage_2K
-    from magpyx.utils import ImageStream
-    # from magpyx.dm import dmutils
-    print('Executing on Pinky...')
-    machine_name = 'pinky'
-    dm01 = ImageStream('dm01disp01')
-elif (os.environ['USERPROFILE'].endswith('PhaseCam')) and (current_platform.upper() == 'WINDOWS'):
-    from fourD import *
-    MessageBox('Executing on the 4D computer...')
-    print('test')
-    machine_name = '4d'
-else:
-    print('Unsupported platform: ', current_platform)
+try:
+    if (os.environ['HOME'].endswith('jkueny')) and (current_platform.upper() == 'LINUX'):
+        print('Starting 4D automation script...')
+        # import h5py
+        from astropy.io import fits
+        from bmc import load_channel, write_fits, update_voltage_2K
+        from magpyx.utils import ImageStream
+        # from magpyx.dm import dmutils
+        print('Executing on Pinky...')
+        machine_name = 'pinky'
+        dm01 = ImageStream('dm01disp01')
+except:
+    if (os.environ['USERPROFILE'].endswith('PhaseCam')) and (current_platform.upper() == 'WINDOWS'):
+        from fourD import *
+        MessageBox('Executing on the 4D computer...')
+        print('test')
+        machine_name = '4d'
+    else:
+        print('Unsupported platform: ', current_platform)
 
 
 # from irisao import write_ptt_command, apply_ptt_command #commented 6/27/23 JKK
