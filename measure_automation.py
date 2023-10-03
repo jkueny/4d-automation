@@ -261,23 +261,22 @@ class fourDMonitor(FileMonitor):
                            remotefpath=self.remote_send,
                            user=to_user,address=to_address)
         
-if __name__ == '__main__':
-    save_measure_dir = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\4d-automation\\test"
-    #first take a flat, then hard-code the fpath for it here
-    reference_flat = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\reference_lamb20avg12_average_ttp-removed.h5"
-    if machine_name.upper() == 'PINKY':
-        print('Execution on the wrong computer!!!')
-        print('We are on {}'.format(current_platform))
-        print('We should be on the 4D Windows machine in Lab 584...')
-    elif machine_name.upper() == 'PHASECAM' or machine_name.upper() == '4D':
-        home_folder = 'C:\\Users\\PhaseCam'
-        remote_folder = "/home/jkueny"
-    else:
-        print('Error, what machine? Bc apparently it is not pinky or the 4D machine...')
-    # kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
-    phasecam_run(
-                    localfpath=home_folder,
-                    remotefpath=remote_folder,
-                    outname=save_measure_dir,
-                    reference=reference_flat,
-                    dry_run=True,)
+save_measure_dir = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\4d-automation\\test"
+#first take a flat, then hard-code the fpath for it here
+reference_flat = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\reference_lamb20avg12_average_ttp-removed.h5"
+if machine_name.upper() == 'PINKY':
+    print('Execution on the wrong computer!!!')
+    print('We are on {}'.format(current_platform))
+    print('We should be on the 4D Windows machine in Lab 584...')
+elif machine_name.upper() == 'PHASECAM' or machine_name.upper() == '4D':
+    home_folder = 'C:\\Users\\PhaseCam'
+    remote_folder = "/home/jkueny"
+else:
+    print('Error, what machine? Bc apparently it is not pinky or the 4D machine...')
+# kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
+phasecam_run(
+                localfpath=home_folder,
+                remotefpath=remote_folder,
+                outname=save_measure_dir,
+                reference=reference_flat,
+                dry_run=True,)
