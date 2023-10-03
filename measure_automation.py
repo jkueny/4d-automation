@@ -241,7 +241,7 @@ class fourDMonitor(FileMonitor):
                 Remote path to scp status file to.
         '''
         self.remote_send = rempath
-        super().__init__(os.path.join(locpath,'dm_ready'))
+        super(fourDMonitor, self).__init__(os.path.join(locpath,'dm_ready'))
 
     def on_new_data(self, newdata):
         '''
@@ -261,6 +261,18 @@ class fourDMonitor(FileMonitor):
         update_status_file(localfpath=local_status_fname,
                            remotefpath=self.remote_send,
                            user=to_user,address=to_address)
+        
+def update_status_file(localfpath,remotefpath,user,address):
+    '''
+    Write an empty file at the correct folder, given the machine
+    '''
+    send_to = '{}@{}:{}'.format(user,address,remotefpath) 
+    try:
+        print('Attempting to send to {}'.format(send_to))
+        subprocess.run(['scp', localfpath, send_to], check=True)
+        print('File copied to {}'.format(send_to))
+    except subprocess.CalledProcessError as e:
+        print('Error: {}'.format(e))
         
 save_measure_dir = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\4d-automation\\test"
 #first take a flat, then hard-code the fpath for it here
