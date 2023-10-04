@@ -127,24 +127,11 @@ def phasecam_run(
             measurement = capture_frame(reference=reference,
                                         filenameprefix=os.path.join(outname,'frame_{0:05d}.h5'.format(i)),
                                         mtype=mtype)
-        else:
-            raise NameError('Which machine is executing this script?') 
-        # write out
-        # if dmtype.upper() == 'ALPAO':
-        #     alpao.command_to_fits(inputs, input_file, overwrite=True)
-        # else: #BMC
-        #     write_fits(input_file, inputs, dtype=np.float32, overwrite=True)
-        # else: #IRISAO
-        #     log.info('Invalid DM type. Only BMC is currently supported for PhaseCam work.')
-        #     break
-        # else: #IRISAO
-        #     input_file = os.path.join(localfpath,'ptt_input.txt'.format(idx))
-        #     write_ptt_command(inputs, input_file)
 
 
         # Remove input file
-        if os.path.exists(input_file):
-            os.remove(input_file)
+        # if os.path.exists(input_file):
+        #     os.remove(input_file)
 
         if delay is not None:
             sleep(delay)
@@ -268,12 +255,12 @@ def update_status_file(localfpath,remotefpath,user,address):
     '''
     send_to = '{0}@{1}:{2}'.format(user,address,remotefpath) 
     try:
-        print('Attempting to send to {0}'.format(send_to))
         # subprocess.run(['scp', localfpath, send_to], check=True)
-        subprocess.check_call(['scp', localfpath, send_to], check=True)
+        subprocess.check_call(['scp', localfpath, send_to], shell=True)
         print('File copied to {0}'.format(send_to))
     except subprocess.CalledProcessError as e:
-        print('Error: {0}'.format(e))
+        print('File transfer failed with exit code:', e.returncode)
+        print('Error output:', e.stderr)
         
 save_measure_dir = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\4d-automation\\test"
 #first take a flat, then hard-code the fpath for it here
