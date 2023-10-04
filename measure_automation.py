@@ -38,7 +38,7 @@ def phasecam_run(
                 # dmtype,
                 delay=None,
                 # consolidate=True,
-                dry_run=True,
+                dry_run=False,
                 clobber=False,
                 reference=None,
                 mtype='average',
@@ -254,10 +254,12 @@ def update_status_file(localfpath,remotefpath,user,address):
     Write an empty file at the correct folder, given the machine
     '''
     send_to = '{0}@{1}:{2}'.format(user,address,remotefpath) 
+    scp_command = ['scp',localfpath,send_to]
     try:
-        # subprocess.run(['scp', localfpath, send_to], check=True)
-        subprocess.check_call(['scp', localfpath, send_to], shell=True)
-        print('File copied to {0}'.format(send_to))
+        process = subprocess.Popen(scp_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        # subprocess.check_call(['scp', localfpath, send_to], shell=True)
+        if process.returncode == 0:
+            log.info('File copied to {0}'.format(send_to))
     except subprocess.CalledProcessError as e:
         print('File transfer failed with exit code:', e.returncode)
         print('Error output:', e.stderr)
