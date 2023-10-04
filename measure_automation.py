@@ -39,7 +39,7 @@ def phasecam_run(
                 delay=None,
                 # consolidate=True,
                 dry_run=False,
-                clobber=False,
+                clobber=True,
                 reference=None,
                 mtype='average',
                 input_name='dm_ready',
@@ -260,6 +260,11 @@ def update_status_file(localfpath,remotefpath,user,address):
         # subprocess.check_call(['scp', localfpath, send_to], shell=True)
         if process.returncode == 0:
             log.info('File copied to {0}'.format(send_to))
+        elif process.returncode == 1:
+            print('File transfer failed with exit code: 1')
+        else:
+            print('File transfer failed with exit code: {0}'.format(process.returncode))
+
     except subprocess.CalledProcessError as e:
         print('File transfer failed with exit code:', e.returncode)
         print('Error output:', e.stderr)
