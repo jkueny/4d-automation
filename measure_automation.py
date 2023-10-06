@@ -290,4 +290,4 @@ phasecam_run(
                 remotefpath=remote_folder,
                 outname=save_measure_dir,
                 reference=reference_flat,
-                dry_run=True,)
+                dry_run=False,)
