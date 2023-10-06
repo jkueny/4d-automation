@@ -279,7 +279,7 @@ if machine_name.upper() == 'PINKY':
     print('We are on {0}'.format(current_platform))
     print('We should be on the 4D Windows machine in Lab 584...')
 elif machine_name.upper() == 'PHASECAM' or machine_name.upper() == '4D':
-    home_folder = 'C:\\Users\\PhaseCam'
+    home_folder = 'C:\\Users\\PhaseCam\\Desktop\\4d-automation'
     remote_folder = "/home/jkueny"
 else:
     print('Error, what machine? Bc apparently it is not pinky or the 4D machine...')
