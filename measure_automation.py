@@ -105,12 +105,12 @@ def phasecam_run(
     log.info('Watching for file {0}'.format(input_file))
     if not (dry_run or clobber):
         # Create a new directory outname to save results to
-        assert not os.path.exists(input_file), '{0} aready exists! Aborting...'.format(outname)
+        assert not os.path.exists(outname), '{0} aready exists! Aborting...'.format(outname)
         os.mkdir(outname)
 
     fd_mon = fourDMonitor(localfpath,remotefpath)
 
-    for i in range(3): #iterations
+    for i in range(1): #iterations
         #software can't handle fits files, outside installs not allowed...
         #so here, we need to scp a file over the network to talk to pinky
         fd_mon.watch(0.01) #this is watching for dm_ready file in localfpath
@@ -124,10 +124,11 @@ def phasecam_run(
         if not dry_run:
             # Take an image on the Zygo
             log.info('Taking image!')
-            measurement = capture_frame(reference=reference,
+            measurement, absolute_coeffs, relaxed_coeffs = capture_frame(reference=reference,
                                         filenameprefix=os.path.join(outname,'frame_{0:05d}.h5'.format(i)),
                                         mtype=mtype)
-
+            print(absolute_coeffs)
+        #TODO save the arrays of coefficients as numpy files to open on pinky
 
         # Remove input file
         # if os.path.exists(input_file):
@@ -239,15 +240,15 @@ class fourDMonitor(FileMonitor):
         os.remove(newdata) # delete DM ready file
         self.continue_monitoring = False # stop monitor loop
         local_status_fname = os.path.join(os.path.dirname(self.file), 'awaiting_dm')
-
-        to_user = 'jkueny'
-        to_address = '192.168.1.6'
-
-        # Write out empty file locally, then scp over to tell 4Sight the DM is ready.
+        # Write out empty file to the shared network drive to tell the DM to change shape.
         open(local_status_fname, 'w').close()
-        update_status_file(localfpath=local_status_fname,
-                           remotefpath=self.remote_send,
-                           user=to_user,address=to_address)
+
+        # to_user = 'jkueny'
+        # to_address = '192.168.1.6'
+
+        # update_status_file(localfpath=local_status_fname,
+        #                    remotefpath=self.remote_send,
+        #                    user=to_user,address=to_address)
         
 def update_status_file(localfpath,remotefpath,user,address):
     '''
@@ -269,7 +270,8 @@ def update_status_file(localfpath,remotefpath,user,address):
         print('File transfer failed with exit code:', e.returncode)
         print('Error output:', e.stderr)
         
-save_measure_dir = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\4d-automation\\test"
+# save_measure_dir = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\4d-automation\\test"
+save_measure_dir = "C:\\Users\\PhaseCam\\Desktop\\4d-automation"
 #first take a flat, then hard-code the fpath for it here
 reference_flat = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\reference_lamb20avg12_average_ttp-removed.h5"
 if machine_name.upper() == 'PINKY':

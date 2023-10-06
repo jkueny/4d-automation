@@ -68,16 +68,17 @@ def capture_frame(reference,filenameprefix=None,mtype='average'):
         measurement = AverageMeasure() #default 7 frames averaged
     else:
         raise ValueError('Not understood! Did you mean "average" or "single"?')
+    SubtractOpticalReference(measurement,reference)
     RemovePiston(measurement)
     RemoveTilt(measurement)
+    absolute_coeffs = GetZernikeCoeff(measurement)
     RemovePower(measurement)
-    SubtractOpticalReference(measurement,reference)
-
+    relaxed_coeffs = GetZernikeCoeff(measurement)
     if filenameprefix is not None:
         log.info('4Sight: writing out to {0}'.format(filenameprefix))
         if not SaveMeasurement(data=measurement,filename=filenameprefix):
             log.warning('Error saving the measurement')
-    return measurement
+    return measurement, absolute_coeffs, relaxed_coeffs
 
 def save_surface(filename):
     '''
