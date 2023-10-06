@@ -125,10 +125,12 @@ def phasecam_run(
             # Take an image on the Zygo
             log.info('Taking measurement!')
             print('Taking measurement!')
-            measurement, absolute_coeffs, relaxed_coeffs = capture_frame(reference=reference,
+            measurement, absolute_coeffs, relaxed_coeffs, rms = capture_frame(reference=reference,
                                         filenameprefix=os.path.join(outname,'frame_{0:05d}.h5'.format(i)),
                                         mtype=mtype)
             print(absolute_coeffs)
+            print('The coeffs are output as:', type(absolute_coeffs))
+            print(rms)
         #TODO save the arrays of coefficients as numpy files to open on pinky
 
         # Remove input file

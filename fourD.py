@@ -75,13 +75,14 @@ def capture_frame(reference,filenameprefix=None,mtype='average'):
     absolute_coeffs = GetZernikeCoeff(measurement)
     RemovePower(measurement)
     relaxed_coeffs = GetZernikeCoeff(measurement)
+    rms = GetRMS(measurement)
     if filenameprefix is not None:
         log.info('4Sight: writing out to {0}'.format(filenameprefix))
         print('4Sight: writing out to {0}'.format(filenameprefix))
         if not SaveMeasurement(data=measurement,filename=filenameprefix):
             log.warning('Error saving the measurement')
             print('Error saving the measurement')
-    return measurement, absolute_coeffs, relaxed_coeffs
+    return measurement, absolute_coeffs, relaxed_coeffs, rms
 
 def save_surface(filename):
     '''
