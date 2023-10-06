@@ -61,6 +61,7 @@ def capture_frame(reference,filenameprefix=None,mtype='average'):
     in 4Sight: exposure time, masks, etc.
     '''
     log.info('4Sight: capturing frame and acquiring from camera.')
+    print('4Sight: capturing frame and acquiring from camera.')
     num_meas = 1
     if mtype.upper() == 'SINGLE':
         measurement = Measure()
@@ -76,8 +77,10 @@ def capture_frame(reference,filenameprefix=None,mtype='average'):
     relaxed_coeffs = GetZernikeCoeff(measurement)
     if filenameprefix is not None:
         log.info('4Sight: writing out to {0}'.format(filenameprefix))
+        print('4Sight: writing out to {0}'.format(filenameprefix))
         if not SaveMeasurement(data=measurement,filename=filenameprefix):
             log.warning('Error saving the measurement')
+            print('Error saving the measurement')
     return measurement, absolute_coeffs, relaxed_coeffs
 
 def save_surface(filename):

@@ -123,7 +123,8 @@ def phasecam_run(
 
         if not dry_run:
             # Take an image on the Zygo
-            log.info('Taking image!')
+            log.info('Taking measurement!')
+            print('Taking measurement!')
             measurement, absolute_coeffs, relaxed_coeffs = capture_frame(reference=reference,
                                         filenameprefix=os.path.join(outname,'frame_{0:05d}.h5'.format(i)),
                                         mtype=mtype)
@@ -131,8 +132,8 @@ def phasecam_run(
         #TODO save the arrays of coefficients as numpy files to open on pinky
 
         # Remove input file
-        # if os.path.exists(input_file):
-        #     os.remove(input_file)
+        if os.path.exists(input_file):
+            os.remove(input_file)
 
         if delay is not None:
             sleep(delay)
