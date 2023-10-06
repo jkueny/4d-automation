@@ -130,7 +130,7 @@ def phasecam_run(
                                         mtype=mtype)
             print(absolute_coeffs)
             print('The coeffs are output as:', type(absolute_coeffs))
-            print(rms)
+            print('The returned surface rms, with units, is: {0}'.format(rms))
         #TODO save the arrays of coefficients as numpy files to open on pinky
 
         # Remove input file
