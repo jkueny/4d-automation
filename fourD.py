@@ -76,7 +76,10 @@ def capture_frame(reference,filenameprefix=None,mtype='average'):
     RemovePower(measurement)
     relaxed_coeffs = GetZernikeCoeff(measurement)
     log.info('4Sight: Zernikes removed.')
-    rms = GetRMS(measurement)
+    surf_result = GetDataset(name='zernikes',subresult='surface')
+    absolute_coeffs = GetZernikeCoeff(surf_result)
+    rms = GetRMSwithUnits(surf_result)
+    log.info('4Sight: Calculated RMS for measurement is {0}'.format(rms))
     if filenameprefix is not None:
         log.info('4Sight: writing out to {0}'.format(filenameprefix))
         print('4Sight: writing out to {0}'.format(filenameprefix))
