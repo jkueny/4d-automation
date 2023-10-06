@@ -61,7 +61,6 @@ def capture_frame(reference,filenameprefix=None,mtype='average'):
     in 4Sight: exposure time, masks, etc.
     '''
     log.info('4Sight: capturing frame and acquiring from camera.')
-    print('4Sight: capturing frame and acquiring from camera.')
     num_meas = 1
     if mtype.upper() == 'SINGLE':
         measurement = Measure()
@@ -70,11 +69,13 @@ def capture_frame(reference,filenameprefix=None,mtype='average'):
     else:
         raise ValueError('Not understood! Did you mean "average" or "single"?')
     SubtractOpticalReference(measurement,reference)
+    log.info('4Sight: subtracting reference.')
     RemovePiston(measurement)
     RemoveTilt(measurement)
     absolute_coeffs = GetZernikeCoeff(measurement)
     RemovePower(measurement)
     relaxed_coeffs = GetZernikeCoeff(measurement)
+    log.info('4Sight: Zernikes removed.')
     rms = GetRMS(measurement)
     if filenameprefix is not None:
         log.info('4Sight: writing out to {0}'.format(filenameprefix))
