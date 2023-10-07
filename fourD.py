@@ -74,19 +74,18 @@ def capture_frame(reference,filenameprefix=None,mtype='average'):
     # RemoveTilt(measurement)
     # absolute_coeffs = GetZernikeCoeff(measurement)
     # RemovePower(measurement)
-    relaxed_coeffs = GetZernikeCoeff(measurement)
+    # relaxed_coeffs = GetZernikeCoeff(measurement)
     # log.info('4Sight: Zernikes removed.')
     surface = measurement.GetAnalyzedDataset()
-    surf_result = measurement.GetAnalyzedDataset()
     absolute_coeffs = GetZernikeCoeff(surface)
-    rms = GetRMSwithUnits(surface)
+    rms = GetRMS(surface)
     log.info('4Sight: Calculated RMS for measurement is {0}'.format(rms))
     if filenameprefix is not None:
         log.info('4Sight: writing out to {0}'.format(filenameprefix))
         if not SaveMeasurement(data=measurement,filename=filenameprefix):
             log.warning('Error saving the measurement')
             print('Error saving the measurement')
-    return measurement, absolute_coeffs, relaxed_coeffs, rms
+    return measurement, absolute_coeffs, rms
 
 def save_surface(filename):
     '''
