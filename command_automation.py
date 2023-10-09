@@ -4,6 +4,7 @@ from time import sleep
 import numpy as np
 import subprocess
 import platform
+from zernike import RZern
 
 current_platform = platform.system()
 
@@ -19,6 +20,8 @@ try:
         print('Executing on Pinky...')
         machine_name = 'pinky'
         dm01 = ImageStream('dm01disp01')
+        #maybe we just add numpy arrays and write to a single disp thing
+        # dm02 = ImageStream('dm01disp02') #TODO need to verify this, and add an additional?
 except:
     if (os.environ['USERPROFILE'].endswith('PhaseCam')) and (current_platform.upper() == 'WINDOWS'):
         from fourD import *
@@ -27,29 +30,24 @@ except:
     else:
         print('Unsupported platform: ', current_platform)
 
-
-# from irisao import write_ptt_command, apply_ptt_command #commented 6/27/23 JKK
-# from . import alpao #commented 6/27/23 JKK
-
 import logging
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
-def phasecam_dm_run(
-                dm_inputs,
-                localfpath,
-                remotefpath,
-                outname,
-                # dmtype,
-                delay=None,
-                # consolidate=True,
-                dry_run=True,
-                clobber=False,
-                reference=None,
-                mtype='average',
-                input_name='dm_input.fits',
-                ispinky=True,
-                ):
+def dm_run(
+            dmglobalbias,
+            networkpath,
+            coeffsfname,
+            startover=True,
+            niterations=3,
+            delay=None,
+            # consolidate=True,
+            dry_run=True,
+            clobber=False,
+            reference=None,
+            pupildiam=34,
+            input_name='dm_ready',
+            ):
     '''
     Loop over dm_inputs, setting the DM in the requested state,
     and taking measurements on the 4D.
@@ -112,65 +110,41 @@ def phasecam_dm_run(
     # if dmtype.upper() not in ['BMC']:
     #     raise ValueError('dmtype not recognized. Must be "BMC".')
 
-    if not (dry_run or clobber):
-        # Create a new directory outname to save results to
-        assert not os.path.exists(outname), '{0} already exists!'.format(outname)
-        os.mkdir(outname)
+    # if not (dry_run or clobber):
+    #     # Create a new directory outname to save results to
+    #     assert not os.path.exists(outname), '{0} already exists!'.format(outname)
+    #     os.mkdir(outname)
 
-    if ispinky:
-        bmc1k_mon = BMC1KMonitor(localfpath,remotefpath)
-    else:
-        fd_mon = fourDMonitor(localfpath,remotefpath)
+    #Generate the Zernike polynomials now, to avoid doing it in a loop.
+    #Because the 4D uses a weird ordering scheme, hard-coding this indexing
+    #for now. Starting with the first 16 polynomials in Zemax(?) ordering.
+    nm_pairs = [(0,0),(1,1),(1,-1),(2,0),(2,2),(2,-2),(3,1),(3,-1),
+            (4,0),(3,3),(3,-3),(4,2),(4,-2),(5,1),(5,-1),(6,0)]
+    zernike_polys = generate_zernike_images(kilo_dm_width, nm_pairs)
 
-    for idx, inputs in enumerate(dm_inputs):
-
-        # if dmtype.upper() == 'BMC':
-
-        if machine_name.upper() == 'PINKY':
-            #Remove any old inputs if they exist
-            old_files = glob.glob(os.path.join(localfpath,'dm_input*.fits'))
-            for old_file in old_files:
-                if os.path.exists(old_file):
-                    os.remove(old_file)
-            # Write out FITS file with requested DM input
-            log.info('Setting DM to state {0}/{1}.'.format(idx + 1, len(dm_inputs)))
-            if not dry_run:
-                dm01.write(inputs)
-            input_file = os.path.join(localfpath,input_name)
-            write_fits(filename=input_file, data=inputs, dtype=np.float32, overwrite=True)
-            log.info('Sending new command...')
-            bmc1k_mon.watch(0.1) #this is watching for new dm_inputs.fits in localfpath
-        elif machine_name.upper() == '4D': #need to do this because the 4Sight
-            #software can't handle fits files, outside installs not allowed...
-            #so here, we need to scp a file over the network to talk to pinky
-            fd_mon.watch(0.01) #this is watching for dm_ready file in localfpath
-            log.info('DM ready!')
-            # Wait until DM indicates it's in the requested state
-            # I'm a little worried the DM could get there before
-            # the monitor starts watching the dm_ready file, but 
-            # that hasn't happened yet.
-            
-
-            if not dry_run:
-                # Take an image on the Zygo
-                log.info('Taking image!')
-                measurement = capture_frame(reference=reference,
-                                            filenameprefix=os.path.join(outname,'frame_{0:05d}.h5'.format(idx)),
-                            mtype=mtype)
+    bmc1k_mon = BMC1KMonitor(networkpath)
+    #start from fresh, this zero array added to the optimal bias command.
+    for i in range(niterations): #just do a few iterations for now
+        if startover:
+            surface_fit = np.zeros_like(dmglobalbias)
+        #otherwise load the coefficient array in the shared network folder and apply
+        #it to the DM as the first command.
         else:
-            raise NameError('Which machine is executing this script?') 
-        # write out
-        # if dmtype.upper() == 'ALPAO':
-        #     alpao.command_to_fits(inputs, input_file, overwrite=True)
-        # else: #BMC
-        #     write_fits(input_file, inputs, dtype=np.float32, overwrite=True)
-        # else: #IRISAO
-        #     log.info('Invalid DM type. Only BMC is currently supported for PhaseCam work.')
-        #     break
-        # else: #IRISAO
-        #     input_file = os.path.join(localfpath,'ptt_input.txt'.format(idx))
-        #     write_ptt_command(inputs, input_file)
-
+            previous_coeffs = np.load(os.path.join(networkpath,coeffsfname)) #array of Z coeffs
+            surface_fit = coeffs_to_command(previous_coeffs,zernike_polys)
+        log.info('Sending new command...')
+        total_command = dmglobalbias - surface_fit
+        #I don't think we will save the commands as files for this job, commenting below.
+        # #Remove any old inputs if they exist
+        # old_files = glob.glob(os.path.join(networkpath,'dm_input*.fits'))
+        # for old_file in old_files:
+        #     if os.path.exists(old_file):
+        #         os.remove(old_file)
+        # Write out FITS file with requested DM input
+        log.info('Setting DM to state {0}/{1}.'.format(i + 1, niterations))
+        if not dry_run:
+            dm01.write(total_command)
+        input_file = os.path.join(networkpath,input_name)
 
         # Remove input file
         if os.path.exists(input_file):
@@ -178,23 +152,9 @@ def phasecam_dm_run(
 
         if delay is not None:
             sleep(delay)
+        startover = False #ensure we use the surface fit from PhaseCam next iteration
+        bmc1k_mon.watch(0.1) #this is watching for new awaiting_dm in networkpath
 
-    # if consolidate:
-    #     log.info('Writing to consolidated .hdf5 file.')
-    #     # Consolidate individual frames and inputs
-    #     # Don't read attributes into a dictionary. This causes python to crash (on Windows)
-    #     # when re-assignging them to hdf5 attributes.
-    #     alldata = read_many_raw_datx(sorted(glob.glob(os.path.join(outname,'frame_*.datx'))), 
-    #                                  attrs_to_dict=True, mask_and_scale=True)
-    #     write_dm_run_to_hdf5(os.path.join(outname,'alldata.hdf5'),
-    #                          np.asarray(alldata['surface']),
-    #                          alldata['surface_attrs'][0],
-    #                          np.asarray(alldata['intensity']),
-    #                          alldata['intensity_attrs'][0],
-    #                          alldata['attrs'][0],
-    #                          np.asarray(dm_inputs),
-    #                          alldata['mask'][0]
-    #                          )
 
 def write_dm_run_to_hdf5(filename, surface_cube, surface_attrs, intensity_cube,
                          intensity_attrs, all_attributes, dm_inputs, mask):
@@ -248,17 +208,99 @@ def write_dm_run_to_hdf5(filename, surface_cube, surface_attrs, intensity_cube,
     
     f.close()
 
-def update_status_file(localfpath,remotefpath,user,address):
+def coeffs_to_command(coeffsarray,zernikepolys):
     '''
-    Write an empty file at the correct folder, given the machine
+    From: https://pypi.org/project/zernike/
+
+    Use zernike_scratch.py for testing of demo functions on project page above.
+
+    4D convention / zernike.py
+    #1 Piston / Piston
+    #2 Tilt x / Tilt x
+    #3 Tilt y / Tilt y
+    #4 Power / Power
+    #5 Astig x / Oblique Astig
+    #6 Astig y / Vertical Astig
+    #7 Coma x / Vertical Coma
+    #8 Coma y / Horizontal Coma
+    #9 Primary spherical / Vertical trefoil
+    #10 Trefoil x / Oblique Trefoil
+    #11 Trefoil y / Primary spherical
+    #12 Secondary Astig x / Secondary Vertical Astig 
+    #13 Secondary Astig y / Secondary Oblique Astig
+    #14 Seconday Coma x / Vertical Quadrafoil
+    #15 Secondary Coma y / Oblique Quadrafoil
+    #16 Secondary Spherical / Secondary Horizontal Coma
+    #17 Tetrafoil x / Secondary Vertical Coma
+    #18 Tetrafoil y / Secondary Oblique Trefoil
+    #19 Secondary trefoil x / Secondary Vertical Trefoil
+    #20 Secondary trefoil y / Oblique Tetrafoil
+    #21 Tertiary Astig x / Vertical Trefoil
+    #22 Tertiary Astig y / Tertiary Spherical
+
+    TODO need to verify output coeffs ordering from 4D
+    TODO need to deduce the units of the output coefficients
     '''
-    send_to = '{}@{}:{}'.format(user,address,remotefpath) 
-    try:
-        print('Attempting to send to {}'.format(send_to))
-        subprocess.run(['scp', localfpath, send_to], check=True)
-        print('File copied to {}'.format(send_to))
-    except subprocess.CalledProcessError as e:
-        print('Error: {}'.format(e))
+    surface_reconstruction = [poly * coeff for poly, coeff in zip(zernikepolys,coeffsarray)]
+
+    return surface_reconstruction
+
+def zernike_radial(rho, n, m):
+    radial_term = np.zeros_like(rho, dtype=float)
+    for s in range((n - abs(m)) // 2 + 1):
+        coef = (-1) ** s * np.math.factorial(n - s)
+        coef /= (
+            np.math.factorial(s)
+            * np.math.factorial(int((n + abs(m)) / 2) - s)
+            * np.math.factorial(int((n - abs(m)) / 2) - s)
+        )
+        radial_term += coef * rho ** (n - 2 * s)
+    return radial_term
+
+def zernike_normalization(n, m):
+    # Calculate the normalization factor for Zernike polynomials
+    norm_factor = np.sqrt((2 * (n + 1)) / (1 + (m == 0)))
+    return norm_factor
+
+def zernike_polynomial(size, n, m):
+    x = np.linspace(-1, 1, size)
+    y = np.linspace(-1, 1, size)
+    X, Y = np.meshgrid(x, y)
+    rho = np.sqrt(X**2 + Y**2)
+    
+    # Create a circular mask with a slightly larger radius to include 34 elements
+    mask = rho <= 1.06  # Adjust the radius as needed
+    
+    # Calculate the radial component of the Zernike polynomial
+    radial_component = zernike_radial(rho, n, m)
+    
+    if m == 0:
+        azimuthal_component = np.ones_like(rho)
+    elif m > 0:
+        azimuthal_component = np.cos(m * np.arctan2(Y, X))
+    else:
+        azimuthal_component = np.sin(-m * np.arctan2(Y, X))
+    
+    # Combine the radial and azimuthal components to get the Zernike polynomial
+    zernike = radial_component * azimuthal_component
+    
+    # Apply the circular mask
+    zernike[~mask] = 0.0
+
+    # Normalize the Zernike polynomial
+    norm_factor = zernike_normalization(n, m)
+    zernike /= norm_factor
+    
+    return zernike
+
+def generate_zernike_images(size, nm_indices):
+    images = []
+    for pair in nm_indices:
+        n = pair[0]
+        m = pair[1]
+        zernike_poly = zernike_polynomial(size, n, m)
+        images.append(zernike_poly)
+    return images
 
 
 
@@ -320,44 +362,6 @@ class FileMonitor(object):
         ''' Placeholder '''
         pass
 
-class fourDMonitor(FileMonitor):
-    '''
-    Set the 4D machine to watch for an indication from
-    the DM that it's been put in the requested state,
-    and proceed with data collection when ready
-    '''
-    def __init__(self, locpath, rempath):
-        '''
-        Parameters:
-            locpath : str
-                Local path to watch for 'dm_ready'
-                file indicating the DM is in the
-                requested state.
-            rempath: str
-                Remote path to scp status file to.
-        '''
-        self.remote_send = rempath
-        super().__init__(os.path.join(locpath,'dm_ready'))
-
-    def on_new_data(self, newdata):
-        '''
-        On detecting a new 'dm_ready' file,
-        stop blocking the 4D code. (No 
-        actual image capture happens here.)
-        '''
-        os.remove(newdata) # delete DM ready file
-        self.continue_monitoring = False # stop monitor loop
-        local_status_fname = os.path.join(os.path.dirname(self.file), 'awaiting_dm')
-
-        to_user = 'jkueny'
-        to_address = '192.168.1.6'
-
-        # Write out empty file locally, then scp over to tell 4Sight the DM is ready.
-        open(local_status_fname, 'w').close()
-        update_status_file(localfpath=local_status_fname,
-                           remotefpath=self.remote_send,
-                           user=to_user,address=to_address)
-
 
 class BMC1KMonitor(FileMonitor):
     '''
@@ -368,7 +372,7 @@ class BMC1KMonitor(FileMonitor):
     Will ignore the current file if it already exists
     when the monitor starts (until it's modified).
     '''
-    def __init__(self, locpath, rempath, input_file='dm_input.fits'):
+    def __init__(self, netpath, input_file='awaiting_dm'):
         '''
         Parameters:
             locpath : str
@@ -376,8 +380,7 @@ class BMC1KMonitor(FileMonitor):
             rempath: str
                 Remote path to scp status files to.
         '''
-        self.remote_send = rempath
-        super().__init__(os.path.join(locpath, input_file))
+        super().__init__(os.path.join(netpath, input_file))
 
     def on_new_data(self, newdata):
         '''
@@ -387,39 +390,42 @@ class BMC1KMonitor(FileMonitor):
         '''
         # Load image from FITS file onto DM channel 0
         log.info('Setting DM from new image file {}'.format(newdata))
-        to_user = 'PhaseCam'
-        to_address = '192.168.1.3'
+        update_status_fname = os.path.join(os.path.dirname(self.file), 'dm_ready')
+        open(update_status_fname, 'w').close()
+        # to_user = 'PhaseCam'
+        # to_address = '192.168.1.3'
         # load_channel(newdata, 1) #dmdisp01
-        local_status_fname = os.path.join(os.path.dirname(self.file), 'dm_ready')
 
         # Write out empty file locally, then scp over to tell 4Sight the DM is ready.
-        open(local_status_fname, 'w').close()
-        update_status_file(localfpath=local_status_fname,
-                           remotefpath=self.remote_send,
-                           user=to_user,address=to_address)
+        # update_status_file(localfpath=local_status_fname,
+        #                    remotefpath=self.remote_send,
+        #                    user=to_user,address=to_address)
 
 
 
 if __name__ == '__main__':
-    kilo_dm_size = (34,34)
+    #Engineering parameters
+    kilo_dm_width = 34 #actuators
     n_actuators = 952
     # m_volume_factor = 0.5275
     # m_act_gain = -1.1572
     # m_dm_input = np.sqrt(cmd * m_volume_factor/m_act_gain)
     optimal_voltage_bias = -1.075 #this is the physical displacement in microns for 70% V bias
+    #### ---- #### ---- #### ---- #### ----
     save_measure_dir = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\4d-automation\\test"
     reference_flat = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\reference_lamb20avg12_average_ttp-removed.h5"
-    cmds_matrix = optimal_voltage_bias * np.eye(kilo_dm_size[0]*kilo_dm_size[1])[kilo_mask.flatten()]
     if machine_name.upper() == 'PINKY':
         home_folder = "/home/jkueny"
-        remote_folder = 'C:\\Users\\PhaseCam'
+        remote_folder = 'C:\\Users\\PhaseCam\\Desktop\\4d-automation'
         kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
         kilo_mask = (kilo_map > 0)
-        dm_cmds = cmds_matrix.reshape(n_actuators,kilo_dm_size[0],kilo_dm_size[1])
-        single_pokes = []
-        for i in range(len(dm_cmds[0])): #34 length
-            single_pokes.append(dm_cmds[i])
-            break #starting with one command for now
+        bias_matrix = optimal_voltage_bias * np.eye(kilo_dm_width**2)[kilo_mask.flatten()]
+        # cmds_matrix = optimal_voltage_bias * np.eye(kilo_dm_size[0]*kilo_dm_size[1])[kilo_mask.flatten()]
+        # dm_cmds = cmds_matrix.reshape(n_actuators,kilo_dm_size[0],kilo_dm_size[1])
+        # single_pokes = []
+        # for i in range(len(dm_cmds[0])): #34 length
+        #     single_pokes.append(dm_cmds[i])
+        #     break #starting with one command for now
         # print(len(single_pokes))
     elif machine_name.upper() == 'PHASECAM':
         home_folder = 'C:\\Users\\PhaseCam'
@@ -427,9 +433,9 @@ if __name__ == '__main__':
     else:
         print('Error, what machine? Bc apparently it is not pinky or the 4D machine...')
     # kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
-    phasecam_dm_run(dm_bias=single_pokes,
-                    localfpath=home_folder,
-                    remotefpath=remote_folder,
-                    outname=save_measure_dir,
+    dm_run(dmglobalbias=bias_matrix,
+                    networkpath=remote_folder,
+                    coeffsfname='surface_zernikes.npy',
                     reference=reference_flat,
-                    dry_run=True,)
+                    dry_run=True,
+                    pupildiam=kilo_dm_width,)
