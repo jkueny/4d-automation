@@ -42,7 +42,7 @@ def dm_run(
             niterations=3,
             delay=None,
             # consolidate=True,
-            dry_run=True,
+            dry_run=False,
             clobber=False,
             reference=None,
             pupildiam=34,
