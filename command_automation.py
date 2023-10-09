@@ -421,7 +421,7 @@ if __name__ == '__main__':
         kilo_mask = (kilo_map > 0)
         bias_matrix = optimal_voltage_bias * np.eye(kilo_dm_width**2)[kilo_mask.flatten()]
         # cmds_matrix = optimal_voltage_bias * np.eye(kilo_dm_size[0]*kilo_dm_size[1])[kilo_mask.flatten()]
-        # dm_cmds = cmds_matrix.reshape(n_actuators,kilo_dm_size[0],kilo_dm_size[1])
+        dm_cmds = bias_matrix.reshape(n_actuators,kilo_dm_width,kilo_dm_width)
         # single_pokes = []
         # for i in range(len(dm_cmds[0])): #34 length
         #     single_pokes.append(dm_cmds[i])
