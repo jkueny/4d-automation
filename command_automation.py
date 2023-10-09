@@ -408,6 +408,7 @@ class BMC1KMonitor(FileMonitor):
             rempath: str
                 Remote path to scp status files to.
         '''
+        log.info('Watching for changes made to this file {0}'.format(os.path.join(netpath, input_file)))
         super().__init__(os.path.join(netpath, input_file))
 
     def on_new_data(self, newdata):
