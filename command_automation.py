@@ -229,7 +229,8 @@ def update_status_file(localfpath,remotefpath,user,address):
     '''
     send_to = '{}@{}:{}'.format(user,address,remotefpath) 
     try:
-        print('Attempting to send to {}'.format(send_to))
+        # print('Attempting to send to {}'.format(send_to))
+        print('Attempting to send {}'.format(localfpath))
         subprocess.run(['scp', localfpath, send_to], check=True)
         print('File copied to {}'.format(send_to))
     except subprocess.CalledProcessError as e:
@@ -440,7 +441,7 @@ if __name__ == '__main__':
     optimal_voltage_bias = -1.075 #this is the physical displacement in microns for 70% V bias
     #### ---- #### ---- #### ---- #### ----
     home_folder = "/home/jkueny"
-    remote_folder = 'C:\\Users\\PhaseCam\\Desktop\\4d-automation2'
+    remote_folder = 'C:\\Users\\PhaseCam\\Desktop\\4d-automation'
     shared_folder = '/netshare/4d-automation2'
     kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
     kilo_mask = (kilo_map > 0)
