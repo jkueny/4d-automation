@@ -46,7 +46,7 @@ def dm_run(
             clobber=False,
             reference=None,
             pupildiam=34,
-            input_name='dm_ready',
+            status_name='dm_ready',
             ):
     '''
     Loop over dm_inputs, setting the DM in the requested state,
@@ -144,7 +144,7 @@ def dm_run(
         if not dry_run:
             log.info('Setting DM to state {0}/{1}.'.format(i + 1, niterations))
             dm01.write(total_command)
-        input_file = os.path.join(networkpath,input_name)
+        input_file = os.path.join(networkpath,status_name)
 
         # Remove input file
         if os.path.exists(input_file):
@@ -152,7 +152,9 @@ def dm_run(
 
         if delay is not None:
             sleep(delay)
+        open(os.path.join(networkpath,'dm_ready'),'w').close()
         startover = False #ensure we use the surface fit from PhaseCam next iteration
+
         bmc1k_mon.watch(0.1) #this is watching for new awaiting_dm in networkpath
 
 
