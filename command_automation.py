@@ -2,9 +2,9 @@ import glob as glob
 import os
 from time import sleep
 import numpy as np
-import subprocess
+# import subprocess
 import platform
-from zernike import RZern
+# from zernike import RZern
 
 current_platform = platform.system()
 
@@ -121,7 +121,7 @@ def dm_run(
     nm_pairs = [(0,0),(1,1),(1,-1),(2,0),(2,2),(2,-2),(3,1),(3,-1),
             (4,0),(3,3),(3,-3),(4,2),(4,-2),(5,1),(5,-1),(6,0)]
     zernike_polys = generate_zernike_images(kilo_dm_width, nm_pairs)
-
+    print('Initiating FileMonitor...')
     bmc1k_mon = BMC1KMonitor(networkpath)
     #start from fresh, this zero array added to the optimal bias command.
     for i in range(niterations): #just do a few iterations for now
@@ -416,7 +416,7 @@ if __name__ == '__main__':
     reference_flat = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\reference_lamb20avg12_average_ttp-removed.h5"
     if machine_name.upper() == 'PINKY':
         home_folder = "/home/jkueny"
-        remote_folder = 'C:\\Users\\PhaseCam\\Desktop\\4d-automation'
+        remote_folder = 'C:\\Users\\PhaseCam\\Desktop\\4d-automation2'
         kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
         kilo_mask = (kilo_map > 0)
         bias_matrix = optimal_voltage_bias * np.eye(kilo_dm_width**2)[kilo_mask.flatten()]
