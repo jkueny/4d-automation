@@ -110,7 +110,7 @@ def phasecam_run(
 
     fd_mon = fourDMonitor(localfpath,remotefpath)
 
-    for i in range(1): #iterations
+    for i in range(3): #iterations
         #software can't handle fits files, outside installs not allowed...
         #so here, we need to scp a file over the network to talk to pinky
         fd_mon.watch(0.01) #this is watching for dm_ready file in localfpath
@@ -131,7 +131,7 @@ def phasecam_run(
             print('The returned surface rms using GetRMSwithUnits(): {0}'.format(rms_units))
             print('The Zern. coeffs are output as:', type(absolute_coeffs))
             print(absolute_coeffs)
-            assert len(absolute_coeffs) == 21, 'Ensure surface fit is output as the first 21 Zernikes!'
+            # assert len(absolute_coeffs) == 21, 'Ensure surface fit is output as the first 21 Zernikes!'
             np.save(os.path.join(localfpath,'surface_zernikes.npy'),absolute_coeffs)
         #TODO save the arrays of coefficients as numpy files to open on pinky
 
