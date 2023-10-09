@@ -419,9 +419,11 @@ if __name__ == '__main__':
         remote_folder = 'C:\\Users\\PhaseCam\\Desktop\\4d-automation2'
         kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
         kilo_mask = (kilo_map > 0)
-        bias_matrix = optimal_voltage_bias * np.eye(kilo_dm_width**2)[kilo_mask.flatten()]
+        # bias_matrix = optimal_voltage_bias * np.eye(kilo_dm_width**2)[kilo_mask.flatten()]
+        bias_matrix = optimal_voltage_bias * np.ones(kilo_dm_width,kilo_dm_width)
         # cmds_matrix = optimal_voltage_bias * np.eye(kilo_dm_size[0]*kilo_dm_size[1])[kilo_mask.flatten()]
-        dm_cmds = bias_matrix.reshape(n_actuators,kilo_dm_width,kilo_dm_width)
+        # dm_cmds = bias_matrix.reshape(n_actuators,kilo_dm_width,kilo_dm_width)
+        dm_cmds = bias_matrix
         # single_pokes = []
         # for i in range(len(dm_cmds[0])): #34 length
         #     single_pokes.append(dm_cmds[i])
