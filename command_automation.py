@@ -443,7 +443,7 @@ if __name__ == '__main__':
     #### ---- #### ---- #### ---- #### ----
     home_folder = "/home/jkueny"
     remote_folder = 'C:\\Users\\PhaseCam\\Desktop\\4d-automation'
-    shared_folder = '/netshare/4d-automation2'
+    shared_folder = '/home/jkueny/netshare/4d-automation2'
     kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
     kilo_mask = (kilo_map > 0)
     # bias_matrix = optimal_voltage_bias * np.eye(kilo_dm_width**2)[kilo_mask.flatten()]
