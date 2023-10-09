@@ -44,7 +44,6 @@ def dm_run(
             # consolidate=True,
             dry_run=True,
             clobber=False,
-            reference=None,
             pupildiam=34,
             status_name='dm_ready',
             ):
@@ -414,32 +413,24 @@ if __name__ == '__main__':
     # m_dm_input = np.sqrt(cmd * m_volume_factor/m_act_gain)
     optimal_voltage_bias = -1.075 #this is the physical displacement in microns for 70% V bias
     #### ---- #### ---- #### ---- #### ----
-    save_measure_dir = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\4d-automation\\test"
-    reference_flat = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\reference_lamb20avg12_average_ttp-removed.h5"
-    if machine_name.upper() == 'PINKY':
-        home_folder = "/home/jkueny"
-        remote_folder = 'C:\\Users\\PhaseCam\\Desktop\\4d-automation2'
-        kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
-        kilo_mask = (kilo_map > 0)
-        # bias_matrix = optimal_voltage_bias * np.eye(kilo_dm_width**2)[kilo_mask.flatten()]
-        bias_matrix = optimal_voltage_bias * np.ones((kilo_dm_width,kilo_dm_width))
-        # cmds_matrix = optimal_voltage_bias * np.eye(kilo_dm_size[0]*kilo_dm_size[1])[kilo_mask.flatten()]
-        # dm_cmds = bias_matrix.reshape(n_actuators,kilo_dm_width,kilo_dm_width)
-        dm_cmds = bias_matrix
-        # single_pokes = []
-        # for i in range(len(dm_cmds[0])): #34 length
-        #     single_pokes.append(dm_cmds[i])
-        #     break #starting with one command for now
-        # print(len(single_pokes))
-    elif machine_name.upper() == 'PHASECAM':
-        home_folder = 'C:\\Users\\PhaseCam'
-        remote_folder = "/home/jkueny"
-    else:
-        print('Error, what machine? Bc apparently it is not pinky or the 4D machine...')
+    home_folder = "/home/jkueny"
+    remote_folder = 'C:\\Users\\PhaseCam\\Desktop\\4d-automation2'
+    shared_folder = '/mnt/4d-automation2'
+    kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
+    kilo_mask = (kilo_map > 0)
+    # bias_matrix = optimal_voltage_bias * np.eye(kilo_dm_width**2)[kilo_mask.flatten()]
+    bias_matrix = optimal_voltage_bias * np.ones((kilo_dm_width,kilo_dm_width))
+    # cmds_matrix = optimal_voltage_bias * np.eye(kilo_dm_size[0]*kilo_dm_size[1])[kilo_mask.flatten()]
+    # dm_cmds = bias_matrix.reshape(n_actuators,kilo_dm_width,kilo_dm_width)
+    dm_cmds = bias_matrix
+    # single_pokes = []
+    # for i in range(len(dm_cmds[0])): #34 length
+    #     single_pokes.append(dm_cmds[i])
+    #     break #starting with one command for now
+    # print(len(single_pokes))
     # kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
     dm_run(dmglobalbias=bias_matrix,
-                    networkpath=remote_folder,
+                    networkpath=shared_folder,
                     coeffsfname='surface_zernikes.npy',
-                    reference=reference_flat,
                     dry_run=False,
                     pupildiam=kilo_dm_width,)
