@@ -110,7 +110,7 @@ def phasecam_run(
 
     fd_mon = fourDMonitor(localfpath,remotefpath)
 
-    for i in range(3): #iterations
+    for i in range(1): #iterations
         #software can't handle fits files, outside installs not allowed...
         #so here, we need to scp a file over the network to talk to pinky
         fd_mon.watch(0.01) #this is watching for dm_ready file in localfpath
