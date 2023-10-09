@@ -141,8 +141,8 @@ def dm_run(
         #     if os.path.exists(old_file):
         #         os.remove(old_file)
         # Write out FITS file with requested DM input
-        log.info('Setting DM to state {0}/{1}.'.format(i + 1, niterations))
         if not dry_run:
+            log.info('Setting DM to state {0}/{1}.'.format(i + 1, niterations))
             dm01.write(total_command)
         input_file = os.path.join(networkpath,input_name)
 
