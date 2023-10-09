@@ -42,7 +42,7 @@ def dm_run(
             niterations=3,
             delay=None,
             # consolidate=True,
-            dry_run=False,
+            dry_run=True,
             clobber=False,
             reference=None,
             pupildiam=34,
@@ -437,5 +437,5 @@ if __name__ == '__main__':
                     networkpath=remote_folder,
                     coeffsfname='surface_zernikes.npy',
                     reference=reference_flat,
-                    dry_run=True,
+                    dry_run=False,
                     pupildiam=kilo_dm_width,)
