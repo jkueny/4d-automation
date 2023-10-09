@@ -2,7 +2,7 @@ import glob as glob
 import os
 from time import sleep
 import numpy as np
-# import subprocess
+import subprocess
 import platform
 # from zernike import RZern
 
@@ -37,6 +37,7 @@ log = logging.getLogger(__name__)
 def dm_run(
             dmglobalbias,
             networkpath,
+            remotepath,
             coeffsfname,
             startover=True,
             niterations=3,
@@ -151,7 +152,20 @@ def dm_run(
 
         if delay is not None:
             sleep(delay)
-        open(os.path.join(networkpath,'dm_ready'),'w').close()
+        if i == 0:
+            open('dm_ready','w').close()
+            update_status_fname = 'dm_ready'
+            # open(update_status_fname, 'w').close()
+            to_user = 'PhaseCam'
+            to_address = '192.168.1.3'
+            # load_channel(newdata, 1) #dmdisp01
+
+            # Write out empty file locally, then scp over to tell 4Sight the DM is ready.
+            update_status_file(localfpath=update_status_fname,
+                            remotefpath=remotepath,
+                            user=to_user,address=to_address)
+        # open(os.path.join(networkpath,'dm_ready'),'w').close()
+
         startover = False #ensure we use the surface fit from PhaseCam next iteration
 
         bmc1k_mon.watch(0.1) #this is watching for new awaiting_dm in networkpath
@@ -208,6 +222,18 @@ def write_dm_run_to_hdf5(filename, surface_cube, surface_attrs, intensity_cube,
     mask = f.create_dataset('mask', data=mask)
     
     f.close()
+
+def update_status_file(localfpath,remotefpath,user,address):
+    '''
+    Write an empty file at the correct folder, given the machine
+    '''
+    send_to = '{}@{}:{}'.format(user,address,remotefpath) 
+    try:
+        print('Attempting to send to {}'.format(send_to))
+        subprocess.run(['scp', localfpath, send_to], check=True)
+        print('File copied to {}'.format(send_to))
+    except subprocess.CalledProcessError as e:
+        print('Error: {}'.format(e))
 
 def coeffs_to_command(coeffsarray,zernikepolys):
     '''
@@ -392,15 +418,15 @@ class BMC1KMonitor(FileMonitor):
         # Load image from FITS file onto DM channel 0
         log.info('Setting DM from new image file {}'.format(newdata))
         update_status_fname = os.path.join(os.path.dirname(self.file), 'dm_ready')
-        open(update_status_fname, 'w').close()
-        # to_user = 'PhaseCam'
-        # to_address = '192.168.1.3'
+        # open(update_status_fname, 'w').close()
+        to_user = 'PhaseCam'
+        to_address = '192.168.1.3'
         # load_channel(newdata, 1) #dmdisp01
 
         # Write out empty file locally, then scp over to tell 4Sight the DM is ready.
-        # update_status_file(localfpath=local_status_fname,
-        #                    remotefpath=self.remote_send,
-        #                    user=to_user,address=to_address)
+        update_status_file(localfpath=update_status_fname,
+                           remotefpath=self.remote_send,
+                           user=to_user,address=to_address)
 
 
 
@@ -415,7 +441,7 @@ if __name__ == '__main__':
     #### ---- #### ---- #### ---- #### ----
     home_folder = "/home/jkueny"
     remote_folder = 'C:\\Users\\PhaseCam\\Desktop\\4d-automation2'
-    shared_folder = '/mnt/4d-automation2'
+    shared_folder = '/netshare/4d-automation2'
     kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
     kilo_mask = (kilo_map > 0)
     # bias_matrix = optimal_voltage_bias * np.eye(kilo_dm_width**2)[kilo_mask.flatten()]
@@ -431,6 +457,7 @@ if __name__ == '__main__':
     # kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
     dm_run(dmglobalbias=bias_matrix,
                     networkpath=shared_folder,
+                    remotepath=remote_folder,
                     coeffsfname='surface_zernikes.npy',
                     dry_run=False,
                     pupildiam=kilo_dm_width,)
