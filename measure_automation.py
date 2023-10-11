@@ -197,7 +197,8 @@ class FileMonitor(object):
                 current_time = time.time()
                 elapsed_time = current_time - start_time
                 if elapsed_time > timeout:
-                    raise Exception('Timeout reached! Exiting...')
+                    # raise Exception('Timeout reached! Exiting...')
+                    exit
                 # Sleep for a bit
                 time.sleep(period)
         except Exception as e:

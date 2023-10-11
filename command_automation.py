@@ -36,6 +36,7 @@ logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
 def dm_run( dm_inputs,
+            dmglobalbias,
             networkpath,
             remotepath,
             outname,
@@ -131,6 +132,7 @@ def dm_run( dm_inputs,
                 os.remove(old_file)
         # Write out FITS file with requested DM input
         log.info('Setting DM to state {0}/{1}.'.format(idx + 1, len(dm_inputs)))
+        inputs += dmglobalbias
         if not dry_run:
             dm01.write(inputs)
         # input_file = os.path.join(networkpath,input_name)
@@ -597,8 +599,8 @@ if __name__ == '__main__':
     kilo_mask = (kilo_map > 0)
     # bias_matrix = optimal_voltage_bias * np.eye(kilo_dm_width**2)[kilo_mask.flatten()]
     bias_matrix = optimal_voltage_bias + np.zeros((kilo_dm_width,kilo_dm_width))
-    cmds_matrix = optimal_voltage_bias * np.eye(kilo_dm_width*kilo_dm_width)[kilo_mask.flatten()]
-    dm_cmds = bias_matrix.reshape(n_actuators,kilo_dm_width,kilo_dm_width)
+    cmds_matrix = 0.015 * np.eye(kilo_dm_width*kilo_dm_width)[kilo_mask.flatten()]# 15 nm
+    dm_cmds = cmds_matrix.reshape(n_actuators,kilo_dm_width,kilo_dm_width)
     # dm_cmds = bias_matrix
     single_pokes = []
     for i in range(n_actuators):
@@ -606,7 +608,8 @@ if __name__ == '__main__':
     #     break #starting with one command for now
     print(f'TODO: {len(single_pokes)} DM pokes.')
     # kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
-    dm_run(dm_inputs=bias_matrix,
+    dm_run( dm_inputs=dm_cmds,
+            globalbias=bias_matrix,
             networkpath=shared_folder,
             remotepath=remote_folder,
             outname=f'{shared_folder}/data',
