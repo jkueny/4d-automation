@@ -472,7 +472,7 @@ class BMC1KMonitor(FileMonitor):
         log.info('Setting DM from new image file {}'.format(newdata))
         update_status_fname = os.path.join(os.path.dirname(self.file), 'dm_ready')
         remote_send = 'C:/Users/PhaseCam/Desktop/4d-automation'
-        # open(update_status_fname, 'w').close()
+        open(update_status_fname, 'w').close()
         to_user = 'PhaseCam'
         to_address = '192.168.1.3'
         # load_channel(newdata, 1) #dmdisp01
