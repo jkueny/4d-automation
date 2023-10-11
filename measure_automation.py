@@ -108,7 +108,8 @@ def phasecam_run(
         os.mkdir(outname)
 
     fd_mon = fourDMonitor(localfpath,remotefpath)
-    os.remove(os.path.join(localfpath,'awaiting_dm'))
+    if os.path.exists(os.path.join(localfpath,'awaiting_dm')):
+        os.remove(os.path.join(localfpath,'awaiting_dm'))
 
     for i in range(952): #iterations
         #software can't handle fits files, outside installs not allowed...
