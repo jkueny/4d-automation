@@ -127,3 +127,14 @@ def read_hdf5(filename, mode='r'):
     Return : nothing
     '''
     return h5py.File(filename, mode)
+
+def open_in_Mx(filename):
+    '''
+    Open a .datx file in Mx
+
+    Parameters:
+        filename : str
+            File path to open.
+    Returns: nothing
+    '''
+    mx.load_data(filename)

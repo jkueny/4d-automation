@@ -5,11 +5,11 @@ import numpy as np
 import subprocess
 import platform
 from zernike import RZern
-from scipy.linalg import hadamard
 import h5py
 
 current_platform = platform.system()
 
+# if (os.environ['HOME'].endswith('jkueny')) or (os.environ['HOME'].endswith('xsup')):
 try:
     if (os.environ['HOME'].endswith('jkueny')) and (current_platform.upper() == 'LINUX'):
         print('Starting 4D automation script...')
@@ -35,20 +35,22 @@ import logging
 logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 
-def dm_run( dm_inputs,
+def dm_run(
+            dmglobalbias,
             networkpath,
             remotepath,
-            outname,
+            coeffsfname,
+            startover=True,
+            niterations=3,
             delay=None,
-            consolidate=True,
+            # consolidate=True,
             dry_run=True,
             clobber=False,
             pupildiam=34,
-            # unitcirclex=621,
-            # unitcircley=642,
-            # unitcirclerad=331,
+            unitcirclex=621,
+            unitcircley=642,
+            unitcirclerad=331,
             status_name='dm_ready',
-            input_name='dm_input.fits',
             ):
     '''
     Loop over dm_inputs, setting the DM in the requested state,
@@ -72,10 +74,18 @@ def dm_run( dm_inputs,
         dm_inputs: array-like
             Cube of displacement images. The DM will iteratively
             be set in each state on channel 0.
-        networkpath : str
+        localfpath : str
             Path to folder where cross-machine communication 
             will take place. Both machines must have read/write 
             privileges.
+        dmtype : str
+            'bmc', 'irisao', or 'alpao'. This determines whether
+            the dm_inputs are written to .fits or .txt. Disabled,
+            because this is only for our new Kilo from BMC for now.
+            JKK 09/19/23
+        outname : str
+            Directory to write results out to. Directory
+            must not already exist.
         delay : float, opt.
             Time in seconds to wait between measurements.
             Default: no delay.
@@ -101,6 +111,8 @@ def dm_run( dm_inputs,
     Returns: nothing
 
     '''
+    # if dmtype.upper() not in ['BMC']:
+    #     raise ValueError('dmtype not recognized. Must be "BMC".')
 
     # if not (dry_run or clobber):
     #     # Create a new directory outname to save results to
@@ -114,29 +126,43 @@ def dm_run( dm_inputs,
     #         (4,0),(3,3),(3,-3),(4,2),(4,-2),(5,1),(5,-1),(6,0)]
     # zernike_polys = generate_zernike_images(kilo_dm_width, nm_pairs)
     # Calculate the coordinates of the upper-left and lower-right corners of the square bounding box
-    # upper_left_x = unitcirclex - unitcirclerad
-    # upper_left_y = unitcircley - unitcirclerad
-    # lower_right_x = unitcirclex + unitcirclerad
-    # lower_right_y = unitcircley + unitcirclerad
-    # circle_crop_sz = unitcirclerad*2 + 1
-    # surface_basis = generate_zernike_basis(norder=15,imgsize=circle_crop_sz,npolys=120)
-    # command_basis = generate_zernike_basis(norder=15,imgsize=pupildiam,npolys=120)
+    upper_left_x = unitcirclex - unitcirclerad
+    upper_left_y = unitcircley - unitcirclerad
+    lower_right_x = unitcirclex + unitcirclerad
+    lower_right_y = unitcircley + unitcirclerad
+    circle_crop_sz = unitcirclerad*2 + 1
+    surface_basis = generate_zernike_basis(norder=15,imgsize=circle_crop_sz,npolys=120)
+    command_basis = generate_zernike_basis(norder=15,imgsize=pupildiam,npolys=120)
     print('Initiating FileMonitor...')
     bmc1k_mon = BMC1KMonitor(networkpath)
     #start from fresh, this zero array added to the optimal bias command.
-    for idx, inputs in enumerate(dm_inputs):
-        old_files = glob.glob(os.path.join(networkpath,'dm_input*.fits'))
-        for old_file in old_files:
-            if os.path.exists(old_file):
-                os.remove(old_file)
-        # Write out FITS file with requested DM input
-        log.info('Setting DM to state {0}/{1}.'.format(idx + 1, len(dm_inputs)))
-        if not dry_run:
-            dm01.write(inputs)
-        # input_file = os.path.join(networkpath,input_name)
-        # write_fits(filename=input_file, data=inputs, dtype=np.float32, overwrite=True)
-        # log.info('Sending new command...')
-        # total_command = dmglobalbias - surface_fit
+    for i in range(niterations): #just do a few iterations for now
+        if startover:
+            surface_fit = np.zeros_like(dmglobalbias)
+        #otherwise load the coefficient array in the shared network folder and apply
+        #it to the DM as the first command.
+        else:
+            previous_coeffs = np.load(os.path.join(networkpath,coeffsfname)) #array of Z coeffs
+            # surface_fit = coeffs_to_command(previous_coeffs,zernike_polys)
+            surface_data = grab_data_hdf5(f'{networkpath}/frame_00000.h5',
+                                          groupname='measurment0',
+                                          datasetname='genraw',
+                                          dataname='data')
+
+            # Crop the circular region from the original image
+            cropped_surface = surface_data[upper_left_y:lower_right_y + 1, upper_left_x:lower_right_x + 1]
+            flattened_cropped_surface = cropped_surface.flatten()
+            surface_coeffs = np.dot(flattened_cropped_surface,surface_basis)
+            surface_fit = compute_command(surfcoeffs=surface_coeffs,
+                                          zernbasis=command_basis,
+                                          dmsize=pupildiam)
+            # Verify the shape of the circular region (should be square with side length equal to the diameter)
+            # diameter = 2 * radius
+            # assert circular_region.shape == (diameter, diameter)
+
+            # surface_data_flat = circular_region.flatten()
+        log.info('Sending new command...')
+        total_command = dmglobalbias - surface_fit
         #I don't think we will save the commands as files for this job, commenting below.
         # #Remove any old inputs if they exist
         # old_files = glob.glob(os.path.join(networkpath,'dm_input*.fits'))
@@ -144,15 +170,18 @@ def dm_run( dm_inputs,
         #     if os.path.exists(old_file):
         #         os.remove(old_file)
         # Write out FITS file with requested DM input
-        # input_file = os.path.join(networkpath,status_name)
+        if not dry_run:
+            log.info('Setting DM to state {0}/{1}.'.format(i + 1, niterations))
+            dm01.write(total_command)
+        input_file = os.path.join(networkpath,status_name)
 
-        # # Remove input file
-        # if os.path.exists(input_file):
-        #     os.remove(input_file)
+        # Remove input file
+        if os.path.exists(input_file):
+            os.remove(input_file)
 
         if delay is not None:
             sleep(delay)
-        if idx == 0: #the Monitor class will take care of this from here
+        if i == 0:
             open('dm_ready','w').close()
             update_status_fname = 'dm_ready'
             # open(update_status_fname, 'w').close()
@@ -166,75 +195,10 @@ def dm_run( dm_inputs,
                             user=to_user,address=to_address)
         # open(os.path.join(networkpath,'dm_ready'),'w').close()
 
+        startover = False #ensure we use the surface fit from PhaseCam next iteration
+
         bmc1k_mon.watch(0.1) #this is watching for new awaiting_dm in networkpath
-    if consolidate:
-        log.info('Writing to consolidated .hdf5 file.')
-        # Consolidate individual frames and inputs
-        # Don't read attributes into a dictionary. This causes python to crash (on Windows)
-        # when re-assignging them to hdf5 attributes.
-        alldata = read_many_raw_h5(sorted(glob.glob(os.path.join(outname,'frame_*.h5'))), 
-                                     attrs_to_dict=True, mask_and_scale=True)
-        write_dm_run_to_hdf5(os.path.join(outname,'alldata.hdf5'),
-                             np.asarray(alldata['surface']),
-                             alldata['surface_attrs'][0],
-                             np.asarray(alldata['intensity']),
-                             alldata['intensity_attrs'][0],
-                             alldata['attrs'][0],
-                             np.asarray(dm_inputs),
-                             alldata['mask'][0]
-                             )
 
-def write_dm_run_to_hdf5(filename, surface_cube, surface_attrs, intensity_cube,
-                         intensity_attrs, all_attributes, dm_inputs, mask):
-    '''
-    Write the measured surface, intensity, attributes, and inputs
-    to a single HDF5 file.
-
-    Attempting to write out the Mx dataset attributes (surface, intensity)
-    currently breaks things (Python crashes), so I've disabled that for now.
-    All the information *should* be in the attributes group, but it's
-    not as convenient.
-
-    Parameters:
-        filename: str
-            File to write out consolidate data to
-        surface_cube : nd array
-            Cube of surface images
-         surface_attrs : dict or h5py attributes object
-            Currently not used, but expected.
-         intensity_cube : nd array
-            Cube of intensity images
-        intensity_attrs : dict or h5py attributes object
-            Currently not used, but expected
-        all_attributes : dict or h5py attributes object
-            Mx attributes to associate with the file.
-        dm_inputs : nd array
-            Cube of inputs for the DM
-        mask : nd array
-            2D mask image
-    Returns: nothing
-    '''
-    import h5py
-
-    # create hdf5 file
-    f = h5py.File(filename, 'w')
-    
-    # surface data and attributes
-    surf = f.create_dataset('surface', data=surface_cube)
-    #surf.attrs.update(surface_attrs)
-
-    intensity = f.create_dataset('intensity', data=intensity_cube)
-    #intensity.attrs.update(intensity_attrs)
-
-    attributes = f.create_group('attributes')
-    attributes.attrs.update(all_attributes)
-
-    dm_inputs = f.create_dataset('dm_inputs', data=dm_inputs)
-    #dm_inputs.attrs['units'] = 'microns'
-
-    mask = f.create_dataset('mask', data=mask)
-    
-    f.close()
 
 def update_status_file(localfpath,remotefpath,user,address):
     '''
@@ -479,106 +443,6 @@ class BMC1KMonitor(FileMonitor):
                            remotefpath=self.remote_send,
                            user=to_user,address=to_address)
 
-def parse_raw_h5(filename, attrs_to_dict=True, mask_and_scale=False):
-    '''
-    Given a .datx file containing raw surface measurements,
-    return a dictionary of the surface and intensity data,
-    as well as file and data attributes.
-    
-    Parameters:
-        filename : str
-            File to open and raw (.datx)
-        attrs_to_dict : bool, opt
-            Cast h5py attributes objects to dicts
-        mask_and_scale : bool, opt
-            Mask out portion of surface/intensity
-            maps with no data and scale from wavefront
-            wavelengths to surface microns.
-
-    Returns: dict of surface, intensity, masks, and attributes
-
-    I really dislike this function, but the .datx files are a mess
-    to handle in h5py without a wrapper like this. 
-    '''
-    
-    h5file = h5py.File(filename, 'r')
-    
-    assert 'measurement0' in list(h5file.keys()), 'No "Measurement" key found. Is this a raw .h5 file?' 
-    
-    # Get surface and attributes
-    data = h5file['measurement0']['genraw']['data']
-    data = data[:]
-    data[data > 10.] = 0.
-    surface = data
-    surface_attrs = h5file['measurement0']['genraw']['data'].attrs
-    # Define the mask from the "no data" key
-    # mask = np.ones_like(surface).astype(bool)
-    # mask[surface == surface_attrs['No Data']] = 0
-    # Mask the surface and scale to surface in microns if requested
-    # if mask_and_scale:
-    #     surface[~mask] = 0
-    #     surface *= surface_attrs['Interferometric Scale Factor'][0] * surface_attrs['Wavelength'] * 1e6
-    
-    # Get file attributes (overlaps with surface attrs, I believe)
-
-    attrs = h5file['Measurement']['Attributes'].attrs
-    
-    # Get intensity map
-    intensity = h5file['Measurement']['Intensity'].value
-    intensity_attrs = h5file['Measurement']['Intensity'].attrs
-
-    if attrs_to_dict:
-        surface_attrs = dict(surface_attrs)
-        attrs = dict(attrs)
-        intensity_attrs = dict(intensity_attrs)
-
-    h5file.close()
-    
-    return {
-        'surface' : surface,
-        'surface_attrs' : surface_attrs,
-        # 'mask' : mask,
-        # 'intensity' : intensity,
-        # 'intensity_attrs' : intensity_attrs,
-        # 'attrs' : attrs 
-    }
-
-def read_many_raw_h5(filenames, attrs_to_dict=True, mask_and_scale=False):
-    '''
-    Simple loop over many .datx files and consolidate into a list
-    of surfaces, intensity maps, and attributes 
-
-    Parameters:
-        filenames: list
-            List of strings pointing to filenames
-        attrs_to_dict : bool, opt
-            Cast h5py attributes objects to dicts
-        mask_and_scale : bool, opt
-            Mask out portion of surface/intensity
-            maps with no data and scale from wavefront
-            wavelengths to surface microns. 
-
-    Returns: list of dicts. See parse_raw_datx.
-    '''
-    consolidated = {
-        'surface' : [],
-        'surface_attrs' : [],
-        # 'intensity' : [],
-        # 'intensity_attrs' : [],
-        # 'attrs' : [],
-        # 'mask' : [],
-    }
-    for f in filenames:
-        fdict = parse_raw_h5(f, attrs_to_dict=attrs_to_dict, mask_and_scale=mask_and_scale)
-        for k in fdict.keys():
-            consolidated[k].append(fdict[k])
-    return consolidated
-
-def get_hadamard_modes(Nact):
-    np2 = 2**int(np.ceil(np.log2(Nact)))
-    #print(f'Generating a {np2}x{np2} Hadamard matrix.')
-    hmat = hadamard(np2)
-    return hmat#[:Nact,:Nact]
 
 
 if __name__ == '__main__':
@@ -597,19 +461,18 @@ if __name__ == '__main__':
     kilo_mask = (kilo_map > 0)
     # bias_matrix = optimal_voltage_bias * np.eye(kilo_dm_width**2)[kilo_mask.flatten()]
     bias_matrix = optimal_voltage_bias + np.zeros((kilo_dm_width,kilo_dm_width))
-    cmds_matrix = optimal_voltage_bias * np.eye(kilo_dm_width*kilo_dm_width)[kilo_mask.flatten()]
-    dm_cmds = bias_matrix.reshape(n_actuators,kilo_dm_width,kilo_dm_width)
-    # dm_cmds = bias_matrix
-    single_pokes = []
-    for i in range(n_actuators):
-        single_pokes.append(dm_cmds[i])
+    # cmds_matrix = optimal_voltage_bias * np.eye(kilo_dm_size[0]*kilo_dm_size[1])[kilo_mask.flatten()]
+    # dm_cmds = bias_matrix.reshape(n_actuators,kilo_dm_width,kilo_dm_width)
+    dm_cmds = bias_matrix
+    # single_pokes = []
+    # for i in range(len(dm_cmds[0])): #34 length
+    #     single_pokes.append(dm_cmds[i])
     #     break #starting with one command for now
-    print(f'TODO: {len(single_pokes)} DM pokes.')
+    # print(len(single_pokes))
     # kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
-    dm_run(dm_inputs=bias_matrix,
-            networkpath=shared_folder,
-            remotepath=remote_folder,
-            outname=f'{shared_folder}/data',
-            dry_run=False,
-            pupildiam=kilo_dm_width,
-            )
+    dm_run(dmglobalbias=bias_matrix,
+                    networkpath=shared_folder,
+                    remotepath=remote_folder,
+                    coeffsfname='surface_zernikes.npy',
+                    dry_run=False,
+                    pupildiam=kilo_dm_width,)

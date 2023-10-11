@@ -1,7 +1,6 @@
 import glob as glob
 import os
-# from time import sleep
-import time
+from time import sleep
 import numpy as np
 import subprocess
 import platform
@@ -98,6 +97,8 @@ def phasecam_run(
     Returns: nothing
 
     '''
+    # if dmtype.upper() not in ['BMC']:
+    #     raise ValueError('dmtype not recognized. Must be "BMC".')
 
     input_file = os.path.join(localfpath,input_name)
     assert not os.path.exists(input_file), '{0} already exists!'.format(input_file)
@@ -109,35 +110,37 @@ def phasecam_run(
 
     fd_mon = fourDMonitor(localfpath,remotefpath)
 
-    # for i in range(1): #iterations
-    #software can't handle fits files, outside installs not allowed...
-    #so here, we need to scp a file over the network to talk to pinky
-    fd_mon.watch(0.01) #this is watching for dm_ready file in localfpath
-    log.info('DM ready!')
-    # Wait until DM indicates it's in the requested state
-    # I'm a little worried the DM could get there before
-    # the monitor starts watching the dm_ready file, but 
-    # that hasn't happened yet.
-    
+    for i in range(1): #iterations
+        #software can't handle fits files, outside installs not allowed...
+        #so here, we need to scp a file over the network to talk to pinky
+        fd_mon.watch(0.01) #this is watching for dm_ready file in localfpath
+        log.info('DM ready!')
+        # Wait until DM indicates it's in the requested state
+        # I'm a little worried the DM could get there before
+        # the monitor starts watching the dm_ready file, but 
+        # that hasn't happened yet.
+        
 
-    if not dry_run:
-        # Take an image on the Zygo
-        log.info('Taking measurement!')
-        measurement, absolute_coeffs, rms, rms_units = capture_frame(reference=reference,
-                                    filenameprefix=os.path.join(outname,'frame_{0:05d}.h5'.format(i)),
-                                    mtype=mtype)
-        # print('The returned surface rms using built-in GetRMS(): {0}'.format(rms))
-        # print('The returned surface rms using GetRMSwithUnits(): {0}'.format(rms_units))
-        # print('The Zern. coeffs are output as:', type(absolute_coeffs))
-        # print(absolute_coeffs)
-        # np.save(os.path.join(localfpath,'surface_zernikes.npy'),absolute_coeffs)
+        if not dry_run:
+            # Take an image on the Zygo
+            log.info('Taking measurement!')
+            measurement, absolute_coeffs, rms, rms_units = capture_frame(reference=reference,
+                                        filenameprefix=os.path.join(outname,'frame_{0:05d}.h5'.format(i)),
+                                        mtype=mtype)
+            print('The returned surface rms using built-in GetRMS(): {0}'.format(rms))
+            print('The returned surface rms using GetRMSwithUnits(): {0}'.format(rms_units))
+            print('The Zern. coeffs are output as:', type(absolute_coeffs))
+            print(absolute_coeffs)
+            # assert len(absolute_coeffs) == 21, 'Ensure surface fit is output as the first 21 Zernikes!'
+            np.save(os.path.join(localfpath,'surface_zernikes.npy'),absolute_coeffs)
+        #TODO save the arrays of coefficients as numpy files to open on pinky
 
-    # Remove input file
-    if os.path.exists(input_file):
-        os.remove(input_file)
+        # Remove input file
+        if os.path.exists(input_file):
+            os.remove(input_file)
 
-    if delay is not None:
-        time.sleep(delay)
+        if delay is not None:
+            sleep(delay)
 
     # if consolidate:
     #     log.info('Writing to consolidated .hdf5 file.')
@@ -176,13 +179,12 @@ class FileMonitor(object):
         # Find initial state
         self.last_modified = self.get_last_modified(self.file)
 
-    def watch(self, period=1.,timeout=30):
+    def watch(self, period=1.):
         '''
         Pick out new data that have appeared since last query.
         Period given in seconds.
         '''
         self.continue_monitoring = True
-        start_time = time.time()
         try:
             while self.continue_monitoring:
                 # Check the file
@@ -194,14 +196,11 @@ class FileMonitor(object):
                     if os.path.exists(self.file):
                         self.on_new_data(self.file)
                     self.last_modified = last_modified
-                current_time = time.time()
-                elapsed_time = current_time - start_time
-                if elapsed_time > timeout:
-                    raise Exception('Timeout reached! Exiting...')
+
                 # Sleep for a bit
-                time.sleep(period)
-        except Exception as e:
-            print(e)
+                sleep(period)
+        except KeyboardInterrupt:
+            return
 
     def get_last_modified(self, file):
         '''

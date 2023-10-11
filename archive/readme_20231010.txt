@@ -1,0 +1,7 @@
+- Changing directions after discussing with Kyle.
+- Abandoning the idea of fitting Zernike modes to output surface to 
+convert to commands on the DM.
+- Will proceed with measuring influence functions with single actuator 
+pokes and Hadamard modes. Need plus/minus response measurements for each 
+actuator and each of the 1024 modes (for a total of 2048 Hadamard 
+measurments).
