@@ -200,6 +200,7 @@ class FileMonitor(object):
                     if os.path.exists(self.file):
                         self.on_new_data(self.file)
                     self.last_modified = last_modified
+                    start_time = time.time()
                 current_time = time.time()
                 elapsed_time = current_time - start_time
                 if elapsed_time > timeout:
