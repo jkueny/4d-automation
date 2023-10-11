@@ -65,7 +65,7 @@ def capture_frame(reference,filenameprefix=None,mtype='average'):
     if mtype.upper() == 'SINGLE':
         measurement = Measure()
     elif (mtype.upper() == 'AVERAGE') or (mtype.upper() == 'AVG'):
-        measurement = AverageMeasure() #default 7 frames averaged
+        measurement = AverageMeasure(frameCount=3) #default 7 frames averaged
     else:
         raise ValueError('Not understood! Did you mean "average" or "single"?')
     # SubtractOpticalReference(measurement,reference)

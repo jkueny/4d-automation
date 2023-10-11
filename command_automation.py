@@ -133,6 +133,7 @@ def dm_run( dm_inputs,
                 os.remove(old_file)
         # Write out FITS file with requested DM input
         log.info('Setting DM to state {0}/{1}.'.format(idx + 1, len(dm_inputs)))
+        print('Setting DM to state {0}/{1}.'.format(idx + 1, len(dm_inputs)))
         inputs += dmglobalbias
         if not dry_run:
             dm01.write(inputs)
@@ -250,9 +251,9 @@ def update_status_file(localfpath,remotefpath,user,address):
     send_to = '{}@{}:{}'.format(user,address,remotefpath) 
     try:
         # print('Attempting to send to {}'.format(send_to))
-        print('Attempting to send {}'.format(localfpath))
+        # print('Attempting to send {}'.format(localfpath))
         subprocess.run(['scp', localfpath, send_to], check=True)
-        print('File copied to {}'.format(send_to))
+        # print('File copied to {}'.format(send_to))
     except subprocess.CalledProcessError as e:
         print('Error: {}'.format(e))
 
@@ -482,7 +483,7 @@ class BMC1KMonitor(FileMonitor):
         empty 'dm_ready' file to the 4D machine
         '''
         # Load image from FITS file onto DM channel 0
-        log.info('Setting DM from new image file {}'.format(newdata))
+        # log.info('Setting DM from new image file {}'.format(newdata))
         update_status_fname = os.path.join('C:/Users/PhaseCam/Desktop/4d-automation', 'dm_ready')
         local_status = 'dm_ready'
         open(local_status, 'w').close()
