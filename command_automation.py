@@ -155,6 +155,7 @@ def dm_run( dm_inputs,
         if delay is not None:
             sleep(delay)
         if idx == 0: #the Monitor class will take care of this from here
+            log.info('First measurment done, scp status file over...')
             open('dm_ready','w').close()
             update_status_fname = 'dm_ready'
             # open(update_status_fname, 'w').close()
@@ -471,15 +472,15 @@ class BMC1KMonitor(FileMonitor):
         # Load image from FITS file onto DM channel 0
         log.info('Setting DM from new image file {}'.format(newdata))
         update_status_fname = os.path.join(os.path.dirname(self.file), 'dm_ready')
-        remote_send = 'dm_ready'
-        open(remote_send, 'w').close()
+        local_status = 'dm_ready'
+        open(local_status, 'w').close()
         to_user = 'PhaseCam'
         to_address = '192.168.1.3'
         # load_channel(newdata, 1) #dmdisp01
 
         # Write out empty file locally, then scp over to tell 4Sight the DM is ready.
-        update_status_file(localfpath=update_status_fname,
-                           remotefpath=remote_send,
+        update_status_file(localfpath=local_status,
+                           remotefpath=update_status_fname,
                            user=to_user,address=to_address)
 
 def parse_raw_h5(filename, attrs_to_dict=True, mask_and_scale=False):
