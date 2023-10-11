@@ -171,7 +171,8 @@ def dm_run( dm_inputs,
             time.sleep(5)
         # open(os.path.join(networkpath,'dm_ready'),'w').close()
 
-        bmc1k_mon.watch(0.1) #this is watching for new awaiting_dm in networkpath
+        # bmc1k_mon.watch(0.1) #this is watching for new awaiting_dm in networkpath
+        bmc1k_mon.watch() #this is watching for new awaiting_dm in networkpath
     if consolidate:
         log.info('Writing to consolidated .hdf5 file.')
         # Consolidate individual frames and inputs
@@ -444,6 +445,7 @@ class FileMonitor(object):
             last_modified = os.stat(file).st_mtime
         else:
             last_modified = 0.
+        print(last_modified)
         return last_modified
 
     def on_new_data(self, newdata):
