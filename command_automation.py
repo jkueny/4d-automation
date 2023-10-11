@@ -168,7 +168,8 @@ def dm_run( dm_inputs,
             update_status_file(localfpath=update_status_fname,
                             remotefpath=remotepath,
                             user=to_user,address=to_address)
-            time.sleep(5)
+            while not os.path.exists(os.join(networkpath,'awaiting_dm')):
+                time.sleep(1)
         # open(os.path.join(networkpath,'dm_ready'),'w').close()
 
         # bmc1k_mon.watch(0.1) #this is watching for new awaiting_dm in networkpath
