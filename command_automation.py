@@ -184,12 +184,12 @@ def dm_run( dm_inputs,
                                      attrs_to_dict=True, mask_and_scale=True)
         write_dm_run_to_hdf5(os.path.join(outname,'alldata.hdf5'),
                              np.asarray(alldata['surface']),
-                             alldata['surface_attrs'][0],
-                             np.asarray(alldata['intensity']),
-                             alldata['intensity_attrs'][0],
-                             alldata['attrs'][0],
+                            #  alldata['surface_attrs'][0],
+                            #  np.asarray(alldata['intensity']),
+                            #  alldata['intensity_attrs'][0],
+                            #  alldata['attrs'][0],
                              np.asarray(dm_inputs),
-                             alldata['mask'][0]
+                            #  alldata['mask'][0]
                              )
 
 def write_dm_run_to_hdf5(filename, surface_cube, surface_attrs, intensity_cube,
@@ -231,16 +231,16 @@ def write_dm_run_to_hdf5(filename, surface_cube, surface_attrs, intensity_cube,
     surf = f.create_dataset('surface', data=surface_cube)
     #surf.attrs.update(surface_attrs)
 
-    intensity = f.create_dataset('intensity', data=intensity_cube)
+    # intensity = f.create_dataset('intensity', data=intensity_cube)
     #intensity.attrs.update(intensity_attrs)
 
-    attributes = f.create_group('attributes')
-    attributes.attrs.update(all_attributes)
+    # attributes = f.create_group('attributes')
+    # attributes.attrs.update(all_attributes)
 
     dm_inputs = f.create_dataset('dm_inputs', data=dm_inputs)
     #dm_inputs.attrs['units'] = 'microns'
 
-    mask = f.create_dataset('mask', data=mask)
+    # mask = f.create_dataset('mask', data=mask)
     
     f.close()
 
@@ -540,11 +540,11 @@ def parse_raw_h5(filename, attrs_to_dict=True, mask_and_scale=False):
     
     # Get file attributes (overlaps with surface attrs, I believe)
 
-    attrs = h5file['Measurement']['Attributes'].attrs
+    # attrs = h5file['Measurement']['Attributes'].attrs
     
     # Get intensity map
-    intensity = h5file['Measurement']['Intensity'].value
-    intensity_attrs = h5file['Measurement']['Intensity'].attrs
+    # intensity = h5file['Measurement']['Intensity'].value
+    # intensity_attrs = h5file['Measurement']['Intensity'].attrs
 
     if attrs_to_dict:
         surface_attrs = dict(surface_attrs)
@@ -555,7 +555,7 @@ def parse_raw_h5(filename, attrs_to_dict=True, mask_and_scale=False):
     
     return {
         'surface' : surface,
-        'surface_attrs' : surface_attrs,
+        # 'surface_attrs' : surface_attrs,
         # 'mask' : mask,
         # 'intensity' : intensity,
         # 'intensity_attrs' : intensity_attrs,
@@ -581,7 +581,7 @@ def read_many_raw_h5(filenames, attrs_to_dict=True, mask_and_scale=False):
     '''
     consolidated = {
         'surface' : [],
-        'surface_attrs' : [],
+        # 'surface_attrs' : [],
         # 'intensity' : [],
         # 'intensity_attrs' : [],
         # 'attrs' : [],
