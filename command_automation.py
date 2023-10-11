@@ -471,6 +471,7 @@ class BMC1KMonitor(FileMonitor):
         # Load image from FITS file onto DM channel 0
         log.info('Setting DM from new image file {}'.format(newdata))
         update_status_fname = os.path.join(os.path.dirname(self.file), 'dm_ready')
+        remote_send = 'C:/Users/PhaseCam/Desktop/4d-automation'
         # open(update_status_fname, 'w').close()
         to_user = 'PhaseCam'
         to_address = '192.168.1.3'
