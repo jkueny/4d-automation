@@ -168,7 +168,7 @@ def dm_run( dm_inputs,
             update_status_file(localfpath=update_status_fname,
                             remotefpath=remotepath,
                             user=to_user,address=to_address)
-            while not os.path.exists(os.join(networkpath,'awaiting_dm')):
+            while not os.path.exists(os.path.join(networkpath,'awaiting_dm')):
                 time.sleep(1)
         # open(os.path.join(networkpath,'dm_ready'),'w').close()
 
