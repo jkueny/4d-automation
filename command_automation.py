@@ -471,7 +471,7 @@ class BMC1KMonitor(FileMonitor):
         '''
         # Load image from FITS file onto DM channel 0
         log.info('Setting DM from new image file {}'.format(newdata))
-        update_status_fname = os.path.join(os.path.dirname(self.file), 'dm_ready')
+        update_status_fname = os.path.join('C:/Users/PhaseCam/Desktop/4d-automation', 'dm_ready')
         local_status = 'dm_ready'
         open(local_status, 'w').close()
         to_user = 'PhaseCam'
