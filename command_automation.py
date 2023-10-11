@@ -4,8 +4,8 @@ from time import sleep
 import numpy as np
 import subprocess
 import platform
-from zernike import RZern
-from scipy.linalg import hadamard
+# from zernike import RZern
+# from scipy.linalg import hadamard
 import h5py
 
 current_platform = platform.system()
@@ -574,11 +574,11 @@ def read_many_raw_h5(filenames, attrs_to_dict=True, mask_and_scale=False):
             consolidated[k].append(fdict[k])
     return consolidated
 
-def get_hadamard_modes(Nact):
-    np2 = 2**int(np.ceil(np.log2(Nact)))
-    #print(f'Generating a {np2}x{np2} Hadamard matrix.')
-    hmat = hadamard(np2)
-    return hmat#[:Nact,:Nact]
+# def get_hadamard_modes(Nact):
+#     np2 = 2**int(np.ceil(np.log2(Nact)))
+#     #print(f'Generating a {np2}x{np2} Hadamard matrix.')
+#     hmat = hadamard(np2)
+#     return hmat#[:Nact,:Nact]
 
 
 if __name__ == '__main__':
