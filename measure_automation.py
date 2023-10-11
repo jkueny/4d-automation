@@ -109,35 +109,35 @@ def phasecam_run(
 
     fd_mon = fourDMonitor(localfpath,remotefpath)
 
-    # for i in range(1): #iterations
-    #software can't handle fits files, outside installs not allowed...
-    #so here, we need to scp a file over the network to talk to pinky
-    fd_mon.watch(0.01) #this is watching for dm_ready file in localfpath
-    log.info('DM ready!')
-    # Wait until DM indicates it's in the requested state
-    # I'm a little worried the DM could get there before
-    # the monitor starts watching the dm_ready file, but 
-    # that hasn't happened yet.
-    
+    for i in range(952): #iterations
+        #software can't handle fits files, outside installs not allowed...
+        #so here, we need to scp a file over the network to talk to pinky
+        fd_mon.watch(0.01) #this is watching for dm_ready file in localfpath
+        log.info('DM ready!')
+        # Wait until DM indicates it's in the requested state
+        # I'm a little worried the DM could get there before
+        # the monitor starts watching the dm_ready file, but 
+        # that hasn't happened yet.
+        
 
-    if not dry_run:
-        # Take an image on the Zygo
-        log.info('Taking measurement!')
-        measurement, absolute_coeffs, rms, rms_units = capture_frame(reference=reference,
-                                    filenameprefix=os.path.join(outname,'frame_{0:05d}.h5'.format(i)),
-                                    mtype=mtype)
-        # print('The returned surface rms using built-in GetRMS(): {0}'.format(rms))
-        # print('The returned surface rms using GetRMSwithUnits(): {0}'.format(rms_units))
-        # print('The Zern. coeffs are output as:', type(absolute_coeffs))
-        # print(absolute_coeffs)
-        # np.save(os.path.join(localfpath,'surface_zernikes.npy'),absolute_coeffs)
+        if not dry_run:
+            # Take an image on the Zygo
+            log.info('Taking measurement!')
+            measurement, absolute_coeffs, rms, rms_units = capture_frame(reference=reference,
+                                        filenameprefix=os.path.join(outname,'frame_{0:05d}.h5'.format(i)),
+                                        mtype=mtype)
+            # print('The returned surface rms using built-in GetRMS(): {0}'.format(rms))
+            # print('The returned surface rms using GetRMSwithUnits(): {0}'.format(rms_units))
+            # print('The Zern. coeffs are output as:', type(absolute_coeffs))
+            # print(absolute_coeffs)
+            # np.save(os.path.join(localfpath,'surface_zernikes.npy'),absolute_coeffs)
 
-    # Remove input file
-    if os.path.exists(input_file):
-        os.remove(input_file)
+        # Remove input file
+        if os.path.exists(input_file):
+            os.remove(input_file)
 
-    if delay is not None:
-        time.sleep(delay)
+        if delay is not None:
+            time.sleep(delay)
 
     # if consolidate:
     #     log.info('Writing to consolidated .hdf5 file.')
