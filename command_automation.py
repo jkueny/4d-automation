@@ -414,6 +414,7 @@ class FileMonitor(object):
         Pick out new data that have appeared since last query.
         Period given in seconds.
         '''
+        self.continue_monitoring = True
         start_time = time.time()
         timeout = 30
         try:
