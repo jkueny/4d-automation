@@ -112,10 +112,11 @@ def phasecam_run(
         os.remove(os.path.join(localfpath,'awaiting_dm'))
 
     for i in range(952): #iterations
+        log.info('On measurement {0} of 952...'.format(i))
         #software can't handle fits files, outside installs not allowed...
         #so here, we need to scp a file over the network to talk to pinky
         fd_mon.watch(0.01) #this is watching for dm_ready file in localfpath
-        log.info('DM ready!')
+        # log.info('DM ready!')
         # Wait until DM indicates it's in the requested state
         # I'm a little worried the DM could get there before
         # the monitor starts watching the dm_ready file, but 

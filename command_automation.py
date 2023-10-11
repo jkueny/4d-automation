@@ -495,6 +495,7 @@ class BMC1KMonitor(FileMonitor):
         update_status_file(localfpath=local_status,
                            remotefpath=update_status_fname,
                            user=to_user,address=to_address)
+        self.continue_monitoring = False #stop monitor loop
 
 def parse_raw_h5(filename, attrs_to_dict=True, mask_and_scale=False):
     '''
