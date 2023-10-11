@@ -132,6 +132,9 @@ def phasecam_run(
             # print('The Zern. coeffs are output as:', type(absolute_coeffs))
             # print(absolute_coeffs)
             # np.save(os.path.join(localfpath,'surface_zernikes.npy'),absolute_coeffs)
+            local_status_fname = os.path.join(localfpath, 'awaiting_dm')
+        # Write out empty file to the shared network drive to tell the DM to change shape.
+            open(local_status_fname, 'w').close()
 
         # Remove input file
         if os.path.exists(input_file):
@@ -248,9 +251,6 @@ class fourDMonitor(FileMonitor):
         '''
         os.remove(newdata) # delete DM ready file
         self.continue_monitoring = False # stop monitor loop
-        local_status_fname = os.path.join(os.path.dirname(self.file), 'awaiting_dm')
-        # Write out empty file to the shared network drive to tell the DM to change shape.
-        open(local_status_fname, 'w').close()
 
         # to_user = 'jkueny'
         # to_address = '192.168.1.6'

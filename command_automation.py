@@ -446,7 +446,7 @@ class FileMonitor(object):
             last_modified = os.stat(file).st_mtime
         else:
             last_modified = 0.
-        print(last_modified)
+        # print(last_modified)
         return last_modified
 
     def on_new_data(self, newdata):
