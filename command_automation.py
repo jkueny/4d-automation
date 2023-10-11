@@ -609,7 +609,7 @@ if __name__ == '__main__':
     print(f'TODO: {len(single_pokes)} DM pokes.')
     # kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
     dm_run( dm_inputs=dm_cmds,
-            globalbias=bias_matrix,
+            dmglobalbias=bias_matrix,
             networkpath=shared_folder,
             remotepath=remote_folder,
             outname=f'{shared_folder}/data',
