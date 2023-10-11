@@ -479,7 +479,7 @@ class BMC1KMonitor(FileMonitor):
 
         # Write out empty file locally, then scp over to tell 4Sight the DM is ready.
         update_status_file(localfpath=update_status_fname,
-                           remotefpath=self.remote_send,
+                           remotefpath=remote_send,
                            user=to_user,address=to_address)
 
 def parse_raw_h5(filename, attrs_to_dict=True, mask_and_scale=False):
