@@ -1,6 +1,7 @@
 import glob as glob
 import os
-from time import sleep
+# from time import sleep
+import time
 import numpy as np
 import subprocess
 import platform
@@ -153,7 +154,7 @@ def dm_run( dm_inputs,
         #     os.remove(input_file)
 
         if delay is not None:
-            sleep(delay)
+            time.sleep(delay)
         if idx == 0: #the Monitor class will take care of this from here
             log.info('First measurment done, scp status file over...')
             open('dm_ready','w').close()
@@ -167,6 +168,7 @@ def dm_run( dm_inputs,
             update_status_file(localfpath=update_status_fname,
                             remotefpath=remotepath,
                             user=to_user,address=to_address)
+            time.sleep(5)
         # open(os.path.join(networkpath,'dm_ready'),'w').close()
 
         bmc1k_mon.watch(0.1) #this is watching for new awaiting_dm in networkpath
@@ -409,7 +411,8 @@ class FileMonitor(object):
         Pick out new data that have appeared since last query.
         Period given in seconds.
         '''
-        self.continue_monitoring = True
+        start_time = time.time()
+        timeout = 30
         try:
             while self.continue_monitoring:
                 # Check the file
@@ -421,11 +424,16 @@ class FileMonitor(object):
                     if os.path.exists(self.file):
                         self.on_new_data(self.file)
                     self.last_modified = last_modified
-
+                current_time = time.time()
+                elapsed_time = current_time - start_time
+                if elapsed_time > timeout:
+                    self.continue_monitoring = False
+                    raise Exception('Timeout reached! Exiting...')
                 # Sleep for a bit
-                sleep(period)
-        except KeyboardInterrupt:
-            return
+                time.sleep(period)
+        except Exception as e:
+            print(e)
+            exit()
 
     def get_last_modified(self, file):
         '''
