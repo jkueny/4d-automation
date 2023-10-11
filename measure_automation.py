@@ -134,6 +134,7 @@ def phasecam_run(
             # np.save(os.path.join(localfpath,'surface_zernikes.npy'),absolute_coeffs)
             local_status_fname = os.path.join(localfpath, 'awaiting_dm')
         # Write out empty file to the shared network drive to tell the DM to change shape.
+            log.info('Writing out status file.')
             open(local_status_fname, 'w').close()
 
         # Remove input file
