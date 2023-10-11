@@ -133,7 +133,7 @@ def dm_run( dm_inputs,
                 os.remove(old_file)
         # Write out FITS file with requested DM input
         log.info('Setting DM to state {0}/{1}.'.format(idx + 1, len(dm_inputs)))
-        print('Setting DM to state {0}/{1}.'.format(idx + 1, len(dm_inputs)))
+        # print('Setting DM to state {0}/{1}.'.format(idx + 1, len(dm_inputs)))
         inputs += dmglobalbias
         if not dry_run:
             dm01.write(inputs)
@@ -170,11 +170,13 @@ def dm_run( dm_inputs,
                             remotefpath=remotepath,
                             user=to_user,address=to_address)
             while not os.path.exists(os.path.join(networkpath,'awaiting_dm')):
+                log.info('No word from PhaseCam yet. Sleeping...')
                 time.sleep(1)
         # open(os.path.join(networkpath,'dm_ready'),'w').close()
 
-        # bmc1k_mon.watch(0.1) #this is watching for new awaiting_dm in networkpath
-        bmc1k_mon.watch() #this is watching for new awaiting_dm in networkpath
+        bmc1k_mon.watch(0.1) #this is watching for new awaiting_dm in networkpath
+        log.info('PhaseCam status file seen, continuing...')
+        # bmc1k_mon.watch() #this is watching for new awaiting_dm in networkpath
     if consolidate:
         log.info('Writing to consolidated .hdf5 file.')
         # Consolidate individual frames and inputs
@@ -616,7 +618,7 @@ if __name__ == '__main__':
     kilo_mask = (kilo_map > 0)
     # bias_matrix = optimal_voltage_bias * np.eye(kilo_dm_width**2)[kilo_mask.flatten()]
     bias_matrix = optimal_voltage_bias + np.zeros((kilo_dm_width,kilo_dm_width))
-    cmds_matrix = 0.1582 * np.eye(kilo_dm_width*kilo_dm_width)[kilo_mask.flatten()]# 15 nm
+    cmds_matrix = 0.6328 * np.eye(kilo_dm_width*kilo_dm_width)[kilo_mask.flatten()]# 15 nm
     dm_cmds = cmds_matrix.reshape(n_actuators,kilo_dm_width,kilo_dm_width)
     # dm_cmds = bias_matrix
     single_pokes = []
