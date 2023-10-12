@@ -8,6 +8,14 @@ import platform
 
 current_platform = platform.system()
 
+''' ======== User-selected parameters ========'''
+n_iterations = 952*2
+# save_measure_dir = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\4d-automation\\test"
+save_measure_dir = "C:\\Users\\PhaseCam\\Desktop\\4d-automation"
+#first take a flat, then hard-code the fpath for it here
+reference_flat = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\reference_lamb20avg12_average_ttp-removed.h5"
+''' ======== End user-selected parameters ======='''
+
 # if (os.environ['HOME'].endswith('jkueny')) or (os.environ['HOME'].endswith('xsup')):
 try:
     if (os.environ['HOME'].endswith('jkueny')) and (current_platform.upper() == 'LINUX'):
@@ -36,6 +44,7 @@ def phasecam_run(
                 localfpath,
                 remotefpath,
                 outname,
+                niterations,
                 # dmtype,
                 delay=None,
                 # consolidate=True,
@@ -111,8 +120,9 @@ def phasecam_run(
     if os.path.exists(os.path.join(localfpath,'awaiting_dm')):
         os.remove(os.path.join(localfpath,'awaiting_dm'))
 
-    for i in range(952): #iterations
-        log.info('On measurement {0} of 952...'.format(i))
+
+    for i in range(niterations): #iterations
+        log.info('On measurement {0} of {1}...'.format(i,niterations))
         #software can't handle fits files, outside installs not allowed...
         #so here, we need to scp a file over the network to talk to pinky
         fd_mon.watch(0.01) #this is watching for dm_ready file in localfpath
@@ -126,9 +136,12 @@ def phasecam_run(
         if not dry_run:
             # Take an image on the Zygo
             log.info('Taking measurement!')
-            measurement, absolute_coeffs, rms, rms_units = capture_frame(reference=reference,
-                                        filenameprefix=os.path.join(outname,'frame_{0:05d}.h5'.format(i)),
-                                        mtype=mtype)
+            # measurement, absolute_coeffs, rms, rms_units = capture_frame(reference=reference,
+            #                             filenameprefix=os.path.join(outname,'frame_{0:05d}.h5'.format(i)),
+            #                             mtype=mtype)
+            capture_frame(reference=reference,
+                          filenameprefix=os.path.join(outname,'frame_{0:05d}.h5'.format(i)),
+                          mtype=mtype)
             # print('The returned surface rms using built-in GetRMS(): {0}'.format(rms))
             # print('The returned surface rms using GetRMSwithUnits(): {0}'.format(rms_units))
             # print('The Zern. coeffs are output as:', type(absolute_coeffs))
@@ -283,10 +296,7 @@ def update_status_file(localfpath,remotefpath,user,address):
         print('File transfer failed with exit code:', e.returncode)
         print('Error output:', e.stderr)
         
-# save_measure_dir = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\4d-automation\\test"
-save_measure_dir = "C:\\Users\\PhaseCam\\Desktop\\4d-automation"
-#first take a flat, then hard-code the fpath for it here
-reference_flat = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\reference_lamb20avg12_average_ttp-removed.h5"
+
 if machine_name.upper() == 'PINKY':
     print('Execution on the wrong computer!!!')
     print('We are on {0}'.format(current_platform))
@@ -301,5 +311,7 @@ phasecam_run(
                 localfpath=home_folder,
                 remotefpath=remote_folder,
                 outname=save_measure_dir,
+                niterations=n_iterations,
                 reference=reference_flat,
-                dry_run=False,)
+                dry_run=False,
+                mtype='burst',)

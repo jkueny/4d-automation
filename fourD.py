@@ -65,33 +65,38 @@ def capture_frame(reference,filenameprefix=None,mtype='average'):
     if mtype.upper() == 'SINGLE':
         measurement = Measure()
     elif (mtype.upper() == 'AVERAGE') or (mtype.upper() == 'AVG'):
-        measurement = AverageMeasure(frameCount=3) #default 7 frames averaged
+        measurement = AverageMeasure(3) #default 7 frames averaged
+    elif (mtype.upper() == 'BURST'):
+        # measurement = acquire_frames() #default 7 frames averaged
+        measurement = BurstMeasure(7,manage=False,calcAverage=True) #default 7 frames averaged
+    elif (mtype.upper() == 'DIFFERENCE') or (mtype.upper() == 'DIFF'):
+        measurement = DifferenceMeasure()
     else:
-        raise ValueError('Not understood! Did you mean "average" or "single"?')
-    # SubtractOpticalReference(measurement,reference)
+        raise ValueError('Not understood! Did you mean "average"/"single"/"burst"?')
+    SubtractOpticalReference(measurement,reference)
     # log.info('4Sight: subtracting reference.')
-    # RemovePiston(measurement)
-    # RemoveTilt(measurement)
+    RemovePiston(measurement)
+    RemoveTilt(measurement)
     # absolute_coeffs = GetZernikeCoeff(measurement)
-    # RemovePower(measurement)
+    RemovePower(measurement)
     # relaxed_coeffs = GetZernikeCoeff(measurement)
     # log.info('4Sight: Zernikes removed.')
-    surface = measurement.GetAnalyzedDataset()
-    zernike_surface = measurement.GetDataset('zernikes','surface')
-    log.info('Type of returned Zernike surface')
-    log.info(type(zernike_surface))
-    log.info('Shape of returned Zernike surface')
-    log.info(np.shape(zernike_surface))
-    absolute_coeffs = GetZernikeCoeff(zernike_surface)
-    rms = GetRMS(surface)
-    rms_units = GetRMSwithUnits(surface)
+    # surface = measurement.GetAnalyzedDataset()
+    # zernike_surface = measurement.GetDataset('zernikes','surface')
+    # log.info('Type of returned Zernike surface')
+    # log.info(type(zernike_surface))
+    # log.info('Shape of returned Zernike surface')
+    # log.info(np.shape(zernike_surface))
+    # absolute_coeffs = GetZernikeCoeff(zernike_surface)
+    # rms = GetRMS(surface)
+    # rms_units = GetRMSwithUnits(surface)
     # log.info('4Sight: Calculated RMS for measurement is {0}'.format(rms))
     if filenameprefix is not None:
         log.info('4Sight: writing out to {0}'.format(filenameprefix))
         if not SaveMeasurement(data=measurement,filename=filenameprefix):
             log.warning('Error saving the measurement')
             print('Error saving the measurement')
-    return measurement, absolute_coeffs, rms, rms_units
+    return #measurement, absolute_coeffs, rms, rms_units
 
 def save_surface(filename):
     '''
