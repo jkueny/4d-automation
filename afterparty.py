@@ -1,5 +1,6 @@
 import h5py
 import os, glob
+import matplotlib.pyplot as plt
 
 basedir = os.environ['HOME']
 workdir = f'{basedir}/netshare/4d-automation2'
@@ -71,6 +72,9 @@ def parse_raw_h5(filename, attrs_to_dict=False, mask_and_scale=False):
     #     # 'attrs' : attrs 
     # }
 
-for each,h5file in enumerate(sorted(glob.glob(f'{datadir}frame*.h5'))):
-    surf_arr = parse_raw_h5(h5file)
-    
+# for each,h5file in enumerate(sorted(glob.glob(f'{datadir}frame*.h5'))):
+pos_surf_arr = parse_raw_h5(f'{datadir}/frame_00519.h5')
+neg_surf_arr = parse_raw_h5(f'{datadir}/frame_01471.h5')
+
+plt.imshow(pos_surf_arr - neg_surf_arr,origin='lower')
+plt.show()
