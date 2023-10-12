@@ -173,7 +173,6 @@ def dm_run( dm_inputs,
                 log.info('No word from PhaseCam yet. Sleeping...')
                 time.sleep(1)
         # open(os.path.join(networkpath,'dm_ready'),'w').close()
-
         bmc1k_mon.watch(0.1) #this is watching for new awaiting_dm in networkpath
         log.info('PhaseCam status file seen, continuing...')
         # bmc1k_mon.watch() #this is watching for new awaiting_dm in networkpath
@@ -618,16 +617,20 @@ if __name__ == '__main__':
     kilo_mask = (kilo_map > 0)
     # bias_matrix = optimal_voltage_bias * np.eye(kilo_dm_width**2)[kilo_mask.flatten()]
     bias_matrix = optimal_voltage_bias + np.zeros((kilo_dm_width,kilo_dm_width))
-    cmds_matrix = 0.6328 * np.eye(kilo_dm_width*kilo_dm_width)[kilo_mask.flatten()]# 15 nm
-    dm_cmds = cmds_matrix.reshape(n_actuators,kilo_dm_width,kilo_dm_width)
+    cmds_matrix_pos = 0.1582 * np.eye(kilo_dm_width*kilo_dm_width)[kilo_mask.flatten()]# 15 nm
+    cmds_matrix_neg = -0.1582 * np.eye(kilo_dm_width*kilo_dm_width)[kilo_mask.flatten()]# 15 nm
+    dm_cmds_pos = cmds_matrix_pos.reshape(n_actuators,kilo_dm_width,kilo_dm_width)
+    dm_cmds_neg = cmds_matrix_neg.reshape(n_actuators,kilo_dm_width,kilo_dm_width)
     # dm_cmds = bias_matrix
     single_pokes = []
     for i in range(n_actuators):
-        single_pokes.append(dm_cmds[i])
+        single_pokes.append(dm_cmds_pos[i])
+    for j in range(n_actuators):
+        single_pokes.append(dm_cmds_neg[j])
     #     break #starting with one command for now
     print(f'TODO: {len(single_pokes)} DM pokes.')
     # kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
-    dm_run( dm_inputs=dm_cmds,
+    dm_run( dm_inputs=single_pokes,
             dmglobalbias=bias_matrix,
             networkpath=shared_folder,
             remotepath=remote_folder,
