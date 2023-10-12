@@ -63,9 +63,9 @@ def capture_frame(reference,filenameprefix=None,mtype='average'):
     log.info('4Sight: capturing frame and acquiring from camera.')
     num_meas = 1
     if mtype.upper() == 'SINGLE':
-        measurement = Measure(mblk='genraw')
+        measurement = Measure()
     elif (mtype.upper() == 'AVERAGE') or (mtype.upper() == 'AVG'):
-        measurement = AverageMeasure(5) #default 7 frames averaged
+        measurement = AverageMeasure(3) #default 7 frames averaged
     elif (mtype.upper() == 'BURST'):
         measurement = acquire_frames() #default 7 frames averaged
         # measurement = BurstMeasure(7,manage=False,calcAverage=True) #default 7 frames averaged

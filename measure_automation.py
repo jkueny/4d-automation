@@ -314,4 +314,4 @@ phasecam_run(
                 niterations=n_iterations,
                 reference=reference_flat,
                 dry_run=False,
-                mtype='single',)
+                mtype='average',)
