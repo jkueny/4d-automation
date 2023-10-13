@@ -640,10 +640,10 @@ if __name__ == '__main__':
     #     single_pokes.append(dm_cmds_neg[j])
     #     break #starting with one command for now
     hadamard_mat_main = get_hadamard_modes(Nact=kilo_dm_width**2)
-    hadamard_overscan = int((hadamard_mat_main.shape[0] - kilo_dm_width**2) / 2)``
+    hadamard_overscan = int((hadamard_mat_main.shape[0] - kilo_dm_width**2) / 2)#1024-952
     hadamard_cmds = []
     for k in range(n_actuators):
-        flat_single_command = hadamard_mat_main[k,hadamard_overscan:-hadamard_overscan]
+        flat_single_command = hadamard_mat_main[k][hadamard_overscan:-hadamard_overscan]
         assert len(flat_single_command) == n_actuators
         single_command = 0.1582 * flat_single_command#.reshape((kilo_dm_width,kilo_dm_width))
         hadamard_cmds.append(dmutils.map_vector_to_square(single_command))
