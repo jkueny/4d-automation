@@ -9,9 +9,10 @@ import platform
 current_platform = platform.system()
 
 ''' ======== User-selected parameters ========'''
-n_iterations = 952*2
-# save_measure_dir = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\4d-automation\\test"
-save_measure_dir = "C:\\Users\\PhaseCam\\Desktop\\4d-automation"
+# n_iterations = 952*2
+n_iterations = 10
+save_measure_dir = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\4d-automation\\ctrl_here"
+# save_measure_dir = "C:\\Users\\PhaseCam\\Desktop\\4d-automation"
 #first take a flat, then hard-code the fpath for it here
 reference_flat = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\reference_lamb20avg12_average_ttp-removed.h5"
 ''' ======== End user-selected parameters ======='''
@@ -121,8 +122,8 @@ def phasecam_run(
         os.remove(os.path.join(localfpath,'awaiting_dm'))
 
 
-    # for i in range(niterations): #iterations
-    for i in range(1632,1904): #iterations
+    for i in range(niterations): #iterations
+    # for i in range(1632,1904): #iterations
         log.info('On measurement {0} of {1}...'.format(i+1,niterations))
         #software can't handle fits files, outside installs not allowed...
         #so here, we need to scp a file over the network to talk to pinky
