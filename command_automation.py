@@ -17,7 +17,7 @@ try:
         from astropy.io import fits
         from bmc import load_channel, write_fits, update_voltage_2K
         from magpyx.utils import ImageStream
-        from magpyx import dmutils
+        from magpyx.dm import dmutils
         from scoobpy import utils
         # from magpyx.dm import dmutils
         print('Executing on Pinky...')
@@ -616,9 +616,8 @@ if __name__ == '__main__':
     home_folder = "/home/jkueny"
     remote_folder = 'C:\\Users\\PhaseCam\\Desktop\\4d-automation'
     shared_folder = '/home/jkueny/netshare/4d-automation2'
-    kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
-    kilo_mask = (kilo_map > 0)
-    # bias_matrix = optimal_voltage_bias * np.eye(kilo_dm_width**2)[kilo_mask.flatten()]
+    # kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
+    # kilo_mask = (kilo_map > 0)
     bias_matrix = optimal_voltage_bias + np.zeros((kilo_dm_width,kilo_dm_width))
     # cmds_matrix_pos = 0.1582 * np.eye(kilo_dm_width*kilo_dm_width)[kilo_mask.flatten()]# 15 nm
     # cmds_matrix_neg = -0.1582 * np.eye(kilo_dm_width*kilo_dm_width)[kilo_mask.flatten()]# 15 nm
