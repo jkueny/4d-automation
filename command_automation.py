@@ -5,8 +5,7 @@ import time
 import numpy as np
 import subprocess
 import platform
-# from zernike import RZern
-# from scipy.linalg import hadamard
+from scipy.linalg import hadamard
 import h5py
 
 current_platform = platform.system()
@@ -18,6 +17,8 @@ try:
         from astropy.io import fits
         from bmc import load_channel, write_fits, update_voltage_2K
         from magpyx.utils import ImageStream
+        from magpyx import dmutils
+        from scoobpy import utils
         # from magpyx.dm import dmutils
         print('Executing on Pinky...')
         machine_name = 'pinky'
@@ -42,7 +43,7 @@ def dm_run( dm_inputs,
             remotepath,
             outname,
             delay=None,
-            consolidate=True,
+            consolidate=False,
             dry_run=True,
             clobber=False,
             pupildiam=34,
@@ -594,11 +595,11 @@ def read_many_raw_h5(filenames, attrs_to_dict=True, mask_and_scale=False):
             consolidated[k].append(fdict[k])
     return consolidated
 
-# def get_hadamard_modes(Nact):
-#     np2 = 2**int(np.ceil(np.log2(Nact)))
-#     #print(f'Generating a {np2}x{np2} Hadamard matrix.')
-#     hmat = hadamard(np2)
-#     return hmat#[:Nact,:Nact]
+def get_hadamard_modes(Nact):
+    np2 = 2**int(np.ceil(np.log2(Nact)))
+    #print(f'Generating a {np2}x{np2} Hadamard matrix.')
+    hmat = hadamard(np2)
+    return hmat#[:Nact,:Nact]
 
 
 if __name__ == '__main__':
@@ -609,6 +610,8 @@ if __name__ == '__main__':
     # m_act_gain = -1.1572
     # m_dm_input = np.sqrt(cmd * m_volume_factor/m_act_gain)
     optimal_voltage_bias = -1.075 #this is the physical displacement in microns for 70% V bias
+    dm_map, dm_mask = utils.get_kilo_map_mask()
+    poke_amplitude = 0.6328 / 4
     #### ---- #### ---- #### ---- #### ----
     home_folder = "/home/jkueny"
     remote_folder = 'C:\\Users\\PhaseCam\\Desktop\\4d-automation'
@@ -617,17 +620,36 @@ if __name__ == '__main__':
     kilo_mask = (kilo_map > 0)
     # bias_matrix = optimal_voltage_bias * np.eye(kilo_dm_width**2)[kilo_mask.flatten()]
     bias_matrix = optimal_voltage_bias + np.zeros((kilo_dm_width,kilo_dm_width))
-    cmds_matrix_pos = 0.1582 * np.eye(kilo_dm_width*kilo_dm_width)[kilo_mask.flatten()]# 15 nm
-    cmds_matrix_neg = -0.1582 * np.eye(kilo_dm_width*kilo_dm_width)[kilo_mask.flatten()]# 15 nm
-    dm_cmds_pos = cmds_matrix_pos.reshape(n_actuators,kilo_dm_width,kilo_dm_width)
-    dm_cmds_neg = cmds_matrix_neg.reshape(n_actuators,kilo_dm_width,kilo_dm_width)
+    # cmds_matrix_pos = 0.1582 * np.eye(kilo_dm_width*kilo_dm_width)[kilo_mask.flatten()]# 15 nm
+    # cmds_matrix_neg = -0.1582 * np.eye(kilo_dm_width*kilo_dm_width)[kilo_mask.flatten()]# 15 nm
+    # dm_cmds_pos = cmds_matrix_pos.reshape(n_actuators,kilo_dm_width,kilo_dm_width)
+    # dm_cmds_neg = cmds_matrix_neg.reshape(n_actuators,kilo_dm_width,kilo_dm_width)
     # dm_cmds = bias_matrix
     single_pokes = []
-    for i in range(n_actuators):
-        single_pokes.append(dm_cmds_pos[i])
-    for j in range(n_actuators):
-        single_pokes.append(dm_cmds_neg[j])
+    for p in range(n_actuators):
+        vec = np.zeros(n_actuators)
+        vec[p] = poke_amplitude
+        single_pokes.append(dmutils.map_vector_to_square(vec, dm_map, dm_mask))
+    for n in range(n_actuators):
+        vec = np.zeros(n_actuators)
+        vec[n] = -poke_amplitude
+        single_pokes.append(dmutils.map_vector_to_square(vec, dm_map, dm_mask))
+    # for i in range(n_actuators):
+    #     single_pokes.append(dm_cmds_pos[i])
+    # for j in range(n_actuators):
+    #     single_pokes.append(dm_cmds_neg[j])
     #     break #starting with one command for now
+    # hadamard_mat_main = get_hadamard_modes(Nact=kilo_dm_width**2)
+    # hadamard_overscan = (hadamard_mat_main.shape[0] - kilo_dm_width**2) / 2
+    # hadamard_cmds = []
+    # for k in range(n_actuators):
+    #     flat_single_command = hadamard_mat_main[k,hadamard_overscan:-hadamard_overscan]
+    #     assert len(flat_single_command) == n_actuators
+    #     single_command = 0.1582 * flat_single_command.reshape((kilo_dm_width,kilo_dm_width))
+    #     hadamard_cmds.append(single_command)
+    # for l in range(n_actuators):
+    #     neg_command = hadamard_cmds[l] * -1
+    #     hadamard_cmds.append(neg_command)
     print(f'TODO: {len(single_pokes)} DM pokes.')
     # kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
     dm_run( dm_inputs=single_pokes,
