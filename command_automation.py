@@ -625,11 +625,12 @@ if __name__ == '__main__':
     # dm_cmds_neg = cmds_matrix_neg.reshape(n_actuators,kilo_dm_width,kilo_dm_width)
     # dm_cmds = bias_matrix
     single_pokes = []
-    for p in range(n_actuators):
-        vec = np.zeros(n_actuators)
-        vec[p] = poke_amplitude
-        single_pokes.append(dmutils.map_vector_to_square(vec, dm_map, dm_mask))
-    for n in range(n_actuators):
+    # for p in range(n_actuators):
+    #     vec = np.zeros(n_actuators)
+    #     vec[p] = poke_amplitude
+    #     single_pokes.append(dmutils.map_vector_to_square(vec, dm_map, dm_mask))
+    # for n in range(n_actuators):
+    for n in range(680,952):
         vec = np.zeros(n_actuators)
         vec[n] = -poke_amplitude
         single_pokes.append(dmutils.map_vector_to_square(vec, dm_map, dm_mask))
