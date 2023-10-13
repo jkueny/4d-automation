@@ -646,11 +646,12 @@ if __name__ == '__main__':
         flat_single_command = hadamard_mat_main[k][hadamard_overscan:-hadamard_overscan]
         assert len(flat_single_command) == n_actuators
         single_command = 0.1582 * flat_single_command#.reshape((kilo_dm_width,kilo_dm_width))
-        hadamard_cmds.append(dmutils.map_vector_to_square(single_command))
+        hadamard_cmds.append(dmutils.map_vector_to_square(single_command, dm_map, dm_mask))
     for l in range(n_actuators):
         neg_command = hadamard_cmds[l] * -1
         hadamard_cmds.append(neg_command)
-    print(f'TODO: {len(single_pokes)} DM pokes.')
+    # print(f'TODO: {len(single_pokes)} DM pokes.')
+    print(f'TODO: {len(hadamard_cmds)} Hadamard pokes.')
     # kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
     dm_run( 
             # dm_inputs=single_pokes,
