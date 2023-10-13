@@ -9,10 +9,10 @@ import platform
 current_platform = platform.system()
 
 ''' ======== User-selected parameters ========'''
-# n_iterations = 952*2
-n_iterations = 10
-save_measure_dir = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\4d-automation\\ctrl_here"
-# save_measure_dir = "C:\\Users\\PhaseCam\\Desktop\\4d-automation"
+n_iterations = 952*2
+# n_iterations = 10
+# save_measure_dir = "C:\\Users\\PhaseCam\\Desktop\\4d-automation\\ctrl_here"
+save_measure_dir = "C:\\Users\\PhaseCam\\Desktop\\4d-automation"
 #first take a flat, then hard-code the fpath for it here
 reference_flat = "C:\\Users\\PhaseCam\\Documents\\jay_4d\\reference_lamb20avg12_average_ttp-removed.h5"
 ''' ======== End user-selected parameters ======='''
@@ -117,7 +117,7 @@ def phasecam_run(
         assert not os.path.exists(outname), '{0} aready exists! Aborting...'.format(outname)
         os.mkdir(outname)
     #Remove old measurements for closed-loop flattening
-    for i in glob.glob('{0}/frame*.h5'.format(outname)):
+    for i in glob.glob('{0}\\frame_*.h5'.format(outname)):
         if os.path.exists(i):
             os.remove(i)
 

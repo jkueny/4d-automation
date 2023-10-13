@@ -65,7 +65,7 @@ def capture_frame(reference,filenameprefix=None,mtype='average'):
     if mtype.upper() == 'SINGLE':
         measurement = Measure()
     elif (mtype.upper() == 'AVERAGE') or (mtype.upper() == 'AVG'):
-        measurement = AverageMeasure(3) #default 7 frames averaged
+        measurement = AverageMeasure(5) #default 7 frames averaged
     elif (mtype.upper() == 'BURST'):
         measurement = acquire_frames() #default 7 frames averaged
         # measurement = BurstMeasure(7,manage=False,calcAverage=True) #default 7 frames averaged
@@ -73,24 +73,12 @@ def capture_frame(reference,filenameprefix=None,mtype='average'):
         measurement = DifferenceMeasure()
     else:
         raise ValueError('Not understood! Did you mean "average"/"single"/"burst"?')
-    SubtractOpticalReference(measurement,reference)
-    # log.info('4Sight: subtracting reference.')
-    RemovePiston(measurement)
-    RemoveTilt(measurement)
-    # absolute_coeffs = GetZernikeCoeff(measurement)
-    RemovePower(measurement)
-    # relaxed_coeffs = GetZernikeCoeff(measurement)
-    # log.info('4Sight: Zernikes removed.')
-    # surface = measurement.GetAnalyzedDataset()
-    # zernike_surface = measurement.GetDataset('zernikes','surface')
-    # log.info('Type of returned Zernike surface')
-    # log.info(type(zernike_surface))
-    # log.info('Shape of returned Zernike surface')
-    # log.info(np.shape(zernike_surface))
-    # absolute_coeffs = GetZernikeCoeff(zernike_surface)
-    # rms = GetRMS(surface)
-    # rms_units = GetRMSwithUnits(surface)
-    # log.info('4Sight: Calculated RMS for measurement is {0}'.format(rms))
+    ######## ======== These are applied automatically if set on the 4Sight gui, so probably not needed ======== ########
+    # SubtractOpticalReference(measurement,reference)
+    # RemovePiston(measurement)
+    # RemoveTilt(measurement)
+    # RemovePower(measurement)
+    ######## ======== End optional post-processing parameters ======== ########
     if filenameprefix is not None:
         log.info('4Sight: writing out to {0}'.format(filenameprefix))
         if not SaveMeasurement(data=measurement,filename=filenameprefix):

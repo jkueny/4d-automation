@@ -629,8 +629,8 @@ if __name__ == '__main__':
     #     vec = np.zeros(n_actuators)
     #     vec[p] = poke_amplitude
     #     single_pokes.append(dmutils.map_vector_to_square(vec, dm_map, dm_mask))
-    # for n in range(n_actuators):
-    for n in range(680,952):
+    for n in range(n_actuators):
+    # for n in range(680,952):
         vec = np.zeros(n_actuators)
         vec[n] = -poke_amplitude
         single_pokes.append(dmutils.map_vector_to_square(vec, dm_map, dm_mask))
@@ -639,20 +639,22 @@ if __name__ == '__main__':
     # for j in range(n_actuators):
     #     single_pokes.append(dm_cmds_neg[j])
     #     break #starting with one command for now
-    # hadamard_mat_main = get_hadamard_modes(Nact=kilo_dm_width**2)
-    # hadamard_overscan = (hadamard_mat_main.shape[0] - kilo_dm_width**2) / 2
-    # hadamard_cmds = []
-    # for k in range(n_actuators):
-    #     flat_single_command = hadamard_mat_main[k,hadamard_overscan:-hadamard_overscan]
-    #     assert len(flat_single_command) == n_actuators
-    #     single_command = 0.1582 * flat_single_command.reshape((kilo_dm_width,kilo_dm_width))
-    #     hadamard_cmds.append(single_command)
-    # for l in range(n_actuators):
-    #     neg_command = hadamard_cmds[l] * -1
-    #     hadamard_cmds.append(neg_command)
+    hadamard_mat_main = get_hadamard_modes(Nact=kilo_dm_width**2)
+    hadamard_overscan = (hadamard_mat_main.shape[0] - kilo_dm_width**2) / 2
+    hadamard_cmds = []
+    for k in range(n_actuators):
+        flat_single_command = hadamard_mat_main[k,hadamard_overscan:-hadamard_overscan]
+        assert len(flat_single_command) == n_actuators
+        single_command = 0.1582 * flat_single_command#.reshape((kilo_dm_width,kilo_dm_width))
+        hadamard_cmds.append(dmutils.map_vector_to_square(single_command))
+    for l in range(n_actuators):
+        neg_command = hadamard_cmds[l] * -1
+        hadamard_cmds.append(neg_command)
     print(f'TODO: {len(single_pokes)} DM pokes.')
     # kilo_map = np.load('/opt/MagAOX/calib/dm/bmc_1k/bmc_2k_actuator_mapping.npy')
-    dm_run( dm_inputs=single_pokes,
+    dm_run( 
+            # dm_inputs=single_pokes,
+            dm_inputs=hadamard_cmds,
             dmglobalbias=bias_matrix,
             networkpath=shared_folder,
             remotepath=remote_folder,
