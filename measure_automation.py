@@ -116,6 +116,10 @@ def phasecam_run(
         # Create a new directory outname to save results to
         assert not os.path.exists(outname), '{0} aready exists! Aborting...'.format(outname)
         os.mkdir(outname)
+    #Remove old measurements for closed-loop flattening
+    for i in glob.glob('{0}/frame*.h5'.format(outname)):
+        if os.path.exists(i):
+            os.remove(i)
 
     fd_mon = fourDMonitor(localfpath,remotefpath)
     if os.path.exists(os.path.join(localfpath,'awaiting_dm')):
