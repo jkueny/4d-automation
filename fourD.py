@@ -20,14 +20,8 @@ try:
     from Scripting.Measurements import *
     from Scripting.Modify import *
     from Scripting.Show import *
-    # connect to 4Sight session (4Sight must be open!)
-    # try:
-    #     connectionmanager.connect()
-    # except core.ZygoError:
-    #     log.warning('Zygo library loaded but connection to Mx could not be established.')
 except ImportError:
     log.warning( 'Could not load 4Sight Python library!' )
-    log.warning( 'Functionality will be severely crippled.')
 
 
 def capture_frame(reference,filenameprefix=None,mtype='average'):
